@@ -144,4 +144,5 @@ class PaymentCodeModule {
     });
   }
 }
+
 export { PaymentCodeModule };

@@ -124,4 +124,5 @@ class UssdOtpModule {
     });
   }
 }
+
 export { UssdOtpModule };

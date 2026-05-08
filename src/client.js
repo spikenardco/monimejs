@@ -126,4 +126,5 @@ class MonimeClient {
     this.ussdOtp = new UssdOtpModule(this.#http_client);
   }
 }
+
 export { MonimeClient };

@@ -85,4 +85,5 @@ class ReceiptModule {
     });
   }
 }
+
 export { ReceiptModule };

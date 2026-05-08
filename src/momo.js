@@ -94,4 +94,5 @@ class MomoModule {
     });
   }
 }
+
 export { MomoModule };

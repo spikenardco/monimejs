@@ -119,4 +119,5 @@ class CheckoutSessionModule {
     });
   }
 }
+
 export { CheckoutSessionModule };

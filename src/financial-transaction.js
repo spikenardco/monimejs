@@ -88,4 +88,5 @@ class FinancialTransactionModule {
     });
   }
 }
+
 export { FinancialTransactionModule };

@@ -137,6 +137,7 @@ class MonimeNetworkError extends MonimeError {
     return true;
   }
 }
+
 export {
   MonimeApiError,
   MonimeError,

@@ -88,4 +88,5 @@ class BankModule {
     });
   }
 }
+
 export { BankModule };

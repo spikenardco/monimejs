@@ -140,4 +140,5 @@ class FinancialAccountModule {
     });
   }
 }
+
 export { FinancialAccountModule };

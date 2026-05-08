@@ -80,6 +80,7 @@ function validate(schema, data) {
     throw to_validation_error(result.issues);
   }
 }
+
 export {
   BankProviderIdSchema,
   ClientOptionsSchema,

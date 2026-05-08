@@ -105,4 +105,5 @@ class PaymentModule {
     });
   }
 }
+
 export { PaymentModule };
