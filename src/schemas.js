@@ -265,6 +265,14 @@ const MomoProviderIdSchema = v.pipe(
   v.string(),
   v.nonEmpty("providerId is required"),
 );
+const ProviderKycProviderIdSchema = v.pipe(
+  v.string(),
+  v.nonEmpty("providerId is required"),
+);
+const ProviderKycAccountIdSchema = v.pipe(
+  v.string(),
+  v.nonEmpty("accountId is required"),
+);
 
 export {
   AmountSchema,
@@ -286,6 +294,8 @@ export {
   MetadataSchema,
   MomoProviderIdSchema,
   PayoutDestinationSchema,
+  ProviderKycAccountIdSchema,
+  ProviderKycProviderIdSchema,
   ReceiptOrderNumberSchema,
   RecurrentPaymentTargetSchema,
   RedeemEntitlementInputSchema,

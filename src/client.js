@@ -8,6 +8,7 @@ import { MomoModule } from "./momo.js";
 import { PaymentModule } from "./payment.js";
 import { PaymentCodeModule } from "./payment-code.js";
 import { PayoutModule } from "./payout.js";
+import { ProviderKycModule } from "./provider-kyc.js";
 import { ReceiptModule } from "./receipt.js";
 import { UssdOtpModule } from "./ussd-otp.js";
 import { WebhookModule } from "./webhook.js";
@@ -69,6 +70,9 @@ class MonimeClient {
   /** Module for retrieving mobile money provider information */
   /** @type {MomoModule} */
   momo;
+  /** Module for retrieving KYC profiles from financial providers */
+  /** @type {ProviderKycModule} */
+  providerKyc;
   /** Module for managing receipts (proof of customer entitlements) */
   /** @type {ReceiptModule} */
   receipt;
@@ -122,6 +126,7 @@ class MonimeClient {
     this.webhook = new WebhookModule(this.#http_client);
     this.internalTransfer = new InternalTransferModule(this.#http_client);
     this.momo = new MomoModule(this.#http_client);
+    this.providerKyc = new ProviderKycModule(this.#http_client);
     this.receipt = new ReceiptModule(this.#http_client);
     this.ussdOtp = new UssdOtpModule(this.#http_client);
   }

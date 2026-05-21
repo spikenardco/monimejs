@@ -1488,6 +1488,56 @@ export type ListMomosParams = {
   after?: string;
 };
 
+/**
+ * Supported provider types for KYC lookups.
+ */
+export type ProviderKycProviderType = "momo" | "bank" | "wallet";
+
+/**
+ * KYC account information returned by a financial provider.
+ */
+export type ProviderKycAccount = {
+  /** Unique identifier of the account in the provider's system */
+  id: string;
+  /** Display name associated with the account, if different from the holder's */
+  name: string;
+  /** Full name of the account holder as registered with the provider */
+  holderName: string;
+  /** Additional metadata of the account */
+  metadata?: Metadata | null;
+};
+
+/**
+ * Financial provider hosting the account being looked up.
+ */
+export type ProviderKycProvider = {
+  /** The id of the provider as assigned by Monime (e.g., "m17") */
+  id: string;
+  /** The type of the provider */
+  type: ProviderKycProviderType;
+  /** The display name of the provider */
+  name: string;
+};
+
+/**
+ * Represents the KYC information of an account from a financial provider
+ * (Mobile Money operator, Bank, or Wallet).
+ */
+export type ProviderKyc = {
+  /** Information of the account in the provider's ecosystem */
+  account: ProviderKycAccount;
+  /** Information of the financial provider hosting the account */
+  provider: ProviderKycProvider;
+};
+
+/**
+ * Query parameters for retrieving a provider KYC profile.
+ */
+export type GetProviderKycParams = {
+  /** The ID of the account in the provider's ecosystem */
+  accountId: string;
+};
+
 export class MonimeClient {
   constructor(options: ClientOptions);
   readonly bank: BankModule;
@@ -1500,6 +1550,7 @@ export class MonimeClient {
   readonly webhook: WebhookModule;
   readonly internalTransfer: InternalTransferModule;
   readonly momo: MomoModule;
+  readonly providerKyc: ProviderKycModule;
   readonly receipt: ReceiptModule;
   readonly ussdOtp: UssdOtpModule;
 }
