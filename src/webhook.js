@@ -146,6 +146,53 @@ class WebhookModule {
       config,
     });
   }
+  /**
+   * Verifies the signature of an incoming webhook request.
+   *
+   * @remarks
+   * **NOT IMPLEMENTED.** The Monime documentation has not yet published the
+   * concrete signature scheme used for webhook requests. The HMAC verification
+   * guide ({@link https://docs.monime.io/guide/webhook/hmac-verification})
+   * is still a placeholder, and the OpenAPI spec for webhooks only describes
+   * the configuration of the verification *method* (`HS256` shared secret or
+   * `ES256` public key) — it does not specify:
+   *
+   *   - the request header name(s) carrying the signature and timestamp
+   *   - the canonical signed-payload format (e.g. `${timestamp}.${rawBody}`)
+   *   - the digest encoding (hex vs base64)
+   *   - the recommended replay-tolerance window
+   *
+   * Until Monime publishes these details, calling this method throws so that
+   * integrators do not silently accept unverified payloads. Track the
+   * upstream docs and replace this stub with the real HS256/ES256
+   * implementation when the spec is available.
+   *
+   * Intended signature once implemented (modeled after Stripe's
+   * `Webhook.constructEvent`):
+   *
+   * ```ts
+   * verifySignature(rawBody: string | Buffer, headers: Record<string, string>,
+   *                 secretOrPublicKey: string,
+   *                 options?: { toleranceSeconds?: number }): WebhookEvent
+   * ```
+   *
+   * @param {string | Buffer} _rawBody - Raw request body exactly as received (do not re-serialize the parsed JSON)
+   * @param {Record<string, string>} _headers - Request headers (lower-cased keys recommended)
+   * @param {string} _secretOrPublicKey - HMAC shared secret (HS256) or PEM-encoded P-256 public key (ES256)
+   * @param {{ toleranceSeconds?: number }} [_options] - Optional verification options
+   * @returns {never}
+   * @throws {Error} Always, until the Monime signing spec is published.
+   * @see {@link https://docs.monime.io/guide/webhook/hmac-verification}
+   */
+  verifySignature(_rawBody, _headers, _secretOrPublicKey, _options) {
+    throw new Error(
+      "MonimeClient.webhook.verifySignature is not implemented yet: " +
+        "Monime has not published the webhook signature header names or " +
+        "canonical signed-payload format. Track " +
+        "https://docs.monime.io/guide/webhook/hmac-verification and file an " +
+        "issue against monimejs once the spec is available.",
+    );
+  }
 }
 
 export { WebhookModule };
