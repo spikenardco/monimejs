@@ -9,7 +9,7 @@ afterEach(() => {
   globalThis.fetch = original_fetch;
 });
 
-test("sends the current Monime API version header", async () => {
+test("sends the pinned Monime API version header", async () => {
   /** @type {RequestInit | undefined} */
   let received_options;
   globalThis.fetch = async (_url, options) => {
