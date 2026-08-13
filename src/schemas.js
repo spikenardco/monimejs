@@ -8,6 +8,10 @@ import * as v from "valibot";
 function optional_nullable(schema) {
   return v.optional(v.nullable(schema));
 }
+/** @param {object} input */
+function has_update_field(input) {
+  return Object.keys(input).length > 0;
+}
 const CurrencySchema = v.picklist(["SLE", "USD"]);
 const AmountSchema = v.object({
   currency: CurrencySchema,
@@ -170,59 +174,93 @@ const CreateUssdOtpInputSchema = v.object({
   duration: v.optional(v.string()),
   metadata: v.optional(MetadataSchema),
 });
-const UpdatePaymentCodeInputSchema = v.object({
-  name: optional_nullable(v.pipe(v.string(), v.minLength(3), v.maxLength(64))),
-  amount: optional_nullable(AmountSchema),
-  duration: optional_nullable(v.string()),
-  enable: optional_nullable(v.boolean()),
-  customer: optional_nullable(
-    v.object({ name: optional_nullable(v.string()) }),
+const UpdatePaymentCodeInputSchema = v.pipe(
+  v.object({
+    name: optional_nullable(
+      v.pipe(v.string(), v.minLength(3), v.maxLength(64)),
+    ),
+    amount: optional_nullable(AmountSchema),
+    duration: optional_nullable(v.string()),
+    enable: optional_nullable(v.boolean()),
+    customer: optional_nullable(
+      v.object({ name: optional_nullable(v.string()) }),
+    ),
+    reference: optional_nullable(v.string()),
+    authorizedProviders: optional_nullable(
+      v.array(v.picklist(["m17", "m18", "m13"])),
+    ),
+    authorizedPhoneNumber: optional_nullable(v.string()),
+    recurrentPaymentTarget: optional_nullable(
+      v.object({
+        expectedPaymentCount: optional_nullable(v.number()),
+        expectedPaymentTotal: optional_nullable(AmountSchema),
+      }),
+    ),
+    financialAccountId: optional_nullable(v.string()),
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
   ),
-  reference: optional_nullable(v.string()),
-  authorizedProviders: optional_nullable(
-    v.array(v.picklist(["m17", "m18", "m13"])),
+);
+const UpdatePaymentInputSchema = v.pipe(
+  v.object({
+    name: optional_nullable(v.string()),
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
   ),
-  authorizedPhoneNumber: optional_nullable(v.string()),
-  recurrentPaymentTarget: optional_nullable(
-    v.object({
-      expectedPaymentCount: optional_nullable(v.number()),
-      expectedPaymentTotal: optional_nullable(AmountSchema),
-    }),
+);
+const UpdatePayoutInputSchema = v.pipe(
+  v.object({
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
   ),
-  financialAccountId: optional_nullable(v.string()),
-  metadata: optional_nullable(MetadataSchema),
-});
-const UpdatePaymentInputSchema = v.object({
-  name: optional_nullable(v.string()),
-  metadata: optional_nullable(MetadataSchema),
-});
-const UpdatePayoutInputSchema = v.object({
-  metadata: optional_nullable(MetadataSchema),
-});
-const UpdateWebhookInputSchema = v.object({
-  name: optional_nullable(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
-  url: optional_nullable(v.pipe(v.string(), v.nonEmpty(), v.maxLength(255))),
-  enabled: optional_nullable(v.boolean()),
-  apiRelease: optional_nullable(v.picklist(["caph", "siriusb"])),
-  events: optional_nullable(
-    v.pipe(v.array(v.string()), v.minLength(1), v.maxLength(100)),
-  ),
-  headers: optional_nullable(
-    v.pipe(
-      v.record(v.string(), v.string()),
-      v.check(
-        (obj) => Object.keys(obj).length <= 10,
-        "headers cannot have more than 10 properties",
+);
+const UpdateWebhookInputSchema = v.pipe(
+  v.object({
+    name: optional_nullable(
+      v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    ),
+    url: optional_nullable(v.pipe(v.string(), v.nonEmpty(), v.maxLength(255))),
+    enabled: optional_nullable(v.boolean()),
+    apiRelease: optional_nullable(v.picklist(["caph", "siriusb"])),
+    events: optional_nullable(
+      v.pipe(v.array(v.string()), v.minLength(1), v.maxLength(100)),
+    ),
+    headers: optional_nullable(
+      v.pipe(
+        v.record(v.string(), v.string()),
+        v.check(
+          (obj) => Object.keys(obj).length <= 10,
+          "headers cannot have more than 10 properties",
+        ),
       ),
     ),
+    alertEmails: optional_nullable(v.pipe(v.array(v.string()), v.maxLength(2))),
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
   ),
-  alertEmails: optional_nullable(v.pipe(v.array(v.string()), v.maxLength(2))),
-  metadata: optional_nullable(MetadataSchema),
-});
-const UpdateInternalTransferInputSchema = v.object({
-  description: optional_nullable(v.pipe(v.string(), v.maxLength(150))),
-  metadata: optional_nullable(MetadataSchema),
-});
+);
+const UpdateInternalTransferInputSchema = v.pipe(
+  v.object({
+    description: optional_nullable(v.pipe(v.string(), v.maxLength(150))),
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
+  ),
+);
 const CreateFinancialAccountInputSchema = v.object({
   name: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
   currency: CurrencySchema,
@@ -230,12 +268,20 @@ const CreateFinancialAccountInputSchema = v.object({
   description: v.optional(v.pipe(v.string(), v.maxLength(150))),
   metadata: v.optional(MetadataSchema),
 });
-const UpdateFinancialAccountInputSchema = v.object({
-  name: optional_nullable(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
-  reference: optional_nullable(v.pipe(v.string(), v.maxLength(64))),
-  description: optional_nullable(v.pipe(v.string(), v.maxLength(150))),
-  metadata: optional_nullable(MetadataSchema),
-});
+const UpdateFinancialAccountInputSchema = v.pipe(
+  v.object({
+    name: optional_nullable(
+      v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
+    ),
+    reference: optional_nullable(v.pipe(v.string(), v.maxLength(64))),
+    description: optional_nullable(v.pipe(v.string(), v.maxLength(150))),
+    metadata: optional_nullable(MetadataSchema),
+  }),
+  v.check(
+    (input) => has_update_field(input),
+    "At least one field must be provided",
+  ),
+);
 const ReceiptOrderNumberSchema = v.pipe(
   v.string(),
   v.nonEmpty("orderNumber is required"),
