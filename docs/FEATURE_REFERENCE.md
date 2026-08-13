@@ -302,7 +302,6 @@ esbuild src/index.ts \
   --format=esm \
   --outfile=dist/index.js \
   --target=node20 \
-  --minify \
   --tree-shaking=true \
   --external:valibot
 ```
@@ -310,7 +309,7 @@ esbuild src/index.ts \
 - **ESM only** - No CommonJS build
 - **Node 20+** - Required for `AbortSignal.any()`
 - **External valibot** - Not bundled, listed as dependency
-- **Minified** - 20.1KB output
+- **Readable output** - Preserves useful source lines in uncaught stack traces
 
 ### TypeScript Declaration Generation
 
@@ -381,7 +380,7 @@ Modules are instantiated once in `MonimeClient` constructor and reused for the c
 | `valibot` | Schema validation | ~10KB |
 
 **Build Output:**
-- `dist/index.js` - Minified bundle | 20.1KB
+- `dist/index.js` - Readable ESM bundle
 - `dist/index.d.ts` - Type declarations | Bundled single file
 
 **Dev dependencies:**
