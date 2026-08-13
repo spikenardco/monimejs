@@ -26,6 +26,7 @@ import { ClientOptionsSchema, validate } from "./validation.js";
  */
 
 const API_VERSION = "v1";
+const MONIME_VERSION = "caph.2025-08-23";
 
 /** API version prefix for all endpoints */
 /** @type {number} */
@@ -162,6 +163,7 @@ class MonimeHttpClient {
     /** @type {Record<string, string>} */
     const headers = {
       "Monime-Space-Id": this.#space_id,
+      "Monime-Version": MONIME_VERSION,
       Authorization: `Bearer ${this.#access_token}`,
     };
     if (body !== undefined) {
