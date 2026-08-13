@@ -4,6 +4,7 @@
  * @property {string} field - Client option that is invalid
  * @property {unknown} [value] - The invalid value that was provided
  */
+/** @typedef {import("./index.d.ts").WebhookVerificationErrorReason} WebhookVerificationErrorReason */
 
 /**
  * Base error class for all Monime SDK errors.
@@ -113,6 +114,25 @@ class MonimeValidationError extends MonimeError {
 }
 
 /**
+ * Error thrown when an incoming webhook cannot be authenticated or decoded.
+ */
+class MonimeWebhookVerificationError extends MonimeError {
+  /** @type {WebhookVerificationErrorReason} */
+  reason;
+
+  /**
+   * @param {string} message
+   * @param {WebhookVerificationErrorReason} reason
+   */
+  constructor(message, reason) {
+    super(message);
+    this.reason = reason;
+    this.name = "MonimeWebhookVerificationError";
+    Object.setPrototypeOf(this, new.target.prototype);
+  }
+}
+
+/**
  * Error thrown when a network error occurs (connection refused, DNS failure, etc.).
  * These errors are generally retryable as they may be transient.
  */
@@ -144,4 +164,5 @@ export {
   MonimeNetworkError,
   MonimeTimeoutError,
   MonimeValidationError,
+  MonimeWebhookVerificationError,
 };

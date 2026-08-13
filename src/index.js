@@ -5,4 +5,5 @@ export {
   MonimeNetworkError,
   MonimeTimeoutError,
   MonimeValidationError,
+  MonimeWebhookVerificationError,
 } from "./errors.js";

@@ -959,6 +959,19 @@ export type WebhookEvent<TData = unknown> = {
   data: TData;
 };
 
+/** Options for webhook signature verification. */
+export type VerifyWebhookSignatureOptions = {
+  /** Maximum allowed age or clock skew in seconds. Defaults to 300. */
+  toleranceSeconds?: number;
+};
+
+/** Stable reason codes for webhook verification failures. */
+export type WebhookVerificationErrorReason =
+  | "signature_header_invalid"
+  | "timestamp_outside_tolerance"
+  | "signature_mismatch"
+  | "payload_invalid";
+
 /**
  * Internal transfer processing states.
  * - "pending": Transfer created, awaiting processing
@@ -1578,6 +1591,10 @@ export class MonimeTimeoutError extends MonimeError {
 
 export class MonimeValidationError extends MonimeError {
   readonly issues: unknown[];
+}
+
+export class MonimeWebhookVerificationError extends MonimeError {
+  readonly reason: WebhookVerificationErrorReason;
 }
 
 export class MonimeNetworkError extends MonimeError {
