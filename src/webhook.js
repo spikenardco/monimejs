@@ -202,6 +202,8 @@ class WebhookModule {
    *
    * The raw body must be the exact bytes received from Monime. Parsing and
    * re-serializing JSON before verification changes the signed payload.
+   * This method supports HS256 signatures only. Monime has not published the
+   * delivery details needed to verify ES256 signatures.
    *
    * @param {string | Buffer} rawBody - Exact request body
    * @param {string} signatureHeader - Complete Monime-Signature header value
@@ -210,6 +212,8 @@ class WebhookModule {
    * @returns {WebhookEvent} The authenticated, decoded webhook event
    * @throws {TypeError} If caller-provided arguments are invalid
    * @throws {MonimeWebhookVerificationError} If verification or JSON decoding fails
+   * @see {@link https://docs.monime.io/guide/webhook/hmac-verification}
+   * @see {@link https://github.com/monimesl/Wp-Monime/blob/61f8ef20bc8ecbdc07f5bc2c5268d2b941452669/src/Monime/core/webhook.php#L49-L157}
    */
   verifySignature(rawBody, signatureHeader, secret, options) {
     if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
