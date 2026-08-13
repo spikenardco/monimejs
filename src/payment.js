@@ -95,12 +95,14 @@ class PaymentModule {
   async update(id, input, config) {
     if (this.#http_client.should_validate) {
       validate(IdSchema, id);
-      validate(UpdatePaymentInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(UpdatePaymentInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/payments/${encodeURIComponent(id)}`,
-      body: input,
+      body: validated_input,
       config,
     });
   }

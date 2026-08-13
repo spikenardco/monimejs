@@ -49,13 +49,13 @@ class PayoutModule {
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreatePayoutInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreatePayoutInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/payouts",
-      body: input,
+      body: validated_input,
       config,
     });
   }
@@ -119,12 +119,14 @@ class PayoutModule {
   async update(id, input, config) {
     if (this.#http_client.should_validate) {
       validate(IdSchema, id);
-      validate(UpdatePayoutInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(UpdatePayoutInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/payouts/${encodeURIComponent(id)}`,
-      body: input,
+      body: validated_input,
       config,
     });
   }

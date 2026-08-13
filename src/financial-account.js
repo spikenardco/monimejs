@@ -55,13 +55,13 @@ class FinancialAccountModule {
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreateFinancialAccountInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreateFinancialAccountInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/financial-accounts",
-      body: input,
+      body: validated_input,
       config,
     });
   }
@@ -130,12 +130,14 @@ class FinancialAccountModule {
   async update(id, input, config) {
     if (this.#http_client.should_validate) {
       validate(IdSchema, id);
-      validate(UpdateFinancialAccountInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(UpdateFinancialAccountInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/financial-accounts/${encodeURIComponent(id)}`,
-      body: input,
+      body: validated_input,
       config,
     });
   }

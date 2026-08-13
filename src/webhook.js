@@ -54,13 +54,13 @@ class WebhookModule {
    * @deprecated - Create webhook from the dashboard instead. this is not guaranteed to work.
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreateWebhookInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreateWebhookInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/webhooks",
-      body: input,
+      body: validated_input,
       config,
     });
   }
@@ -119,12 +119,14 @@ class WebhookModule {
   async update(id, input, config) {
     if (this.#http_client.should_validate) {
       validate(IdSchema, id);
-      validate(UpdateWebhookInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(UpdateWebhookInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/webhooks/${encodeURIComponent(id)}`,
-      body: input,
+      body: validated_input,
       config,
     });
   }
