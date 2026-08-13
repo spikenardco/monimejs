@@ -27,6 +27,7 @@
     "format": "biome check --write .",
     "format:check": "biome check .",
     "typecheck": "tsc --noEmit",
+    "typecheck:contracts": "tsc --project tsconfig.types-contract.json",
     "build": "npm run build:js && npm run build:types",
     "build:js": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true --external:valibot",
     "build:types": "cp src/index.d.ts dist/index.d.ts",
