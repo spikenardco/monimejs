@@ -940,6 +940,25 @@ export type ListWebhooksParams = {
   after?: string;
 };
 
+/** Envelope sent by Monime for a webhook event. */
+export type WebhookEvent<TData = unknown> = {
+  /** API contract version used for this event */
+  apiVersion: string;
+  /** Event identity and delivery timestamp */
+  event: {
+    id: string;
+    name: string;
+    timestamp: string;
+  };
+  /** Monime object associated with the event */
+  object: {
+    id: string;
+    type: string;
+  };
+  /** Event-specific object data */
+  data: TData;
+};
+
 /**
  * Internal transfer processing states.
  * - "pending": Transfer created, awaiting processing

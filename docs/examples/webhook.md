@@ -1,6 +1,22 @@
-# Webhook Examples
+# Webhook examples
 
 Webhooks provide real-time event notifications to your server. Configure webhooks to receive instant updates on payments, payouts, checkout sessions, and other platform events. Choose between HMAC or ECDSA signature verification for security.
+
+## Webhook event type
+
+`WebhookEvent` describes the common webhook envelope. Pass the expected resource type as its generic argument when the event data is known.
+
+```typescript
+import type { PaymentCode, WebhookEvent } from "monimejs";
+
+type PaymentCodeWebhookEvent = WebhookEvent<PaymentCode>;
+
+function handlePaymentCodeEvent(payload: PaymentCodeWebhookEvent) {
+  console.log(payload.event.name, payload.data.status);
+}
+```
+
+The type describes the payload for TypeScript. It does not parse or verify incoming requests.
 
 ## create with HMAC verification
 
