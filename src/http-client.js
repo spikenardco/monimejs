@@ -37,6 +37,59 @@ const DEFAULT_RETRY_DELAY = 1e3;
 const DEFAULT_RETRY_BACKOFF = 2;
 /** @type {string} */
 const DEFAULT_BASE_URL = "https://api.monime.io";
+/** @type {string} */
+const DEFAULT_BASE_ORIGIN = new URL(DEFAULT_BASE_URL).origin;
+
+/**
+ * @param {string} base_url
+ * @param {boolean} allow_unsafe_custom_base_url
+ * @returns {string}
+ */
+function validate_base_url(base_url, allow_unsafe_custom_base_url) {
+  /** @type {URL} */
+  let parsed_url;
+  try {
+    parsed_url = new URL(base_url);
+  } catch {
+    throw_base_url_error(
+      "baseUrl must be a valid absolute HTTPS URL",
+      base_url,
+    );
+  }
+  if (parsed_url.protocol !== "https:") {
+    throw_base_url_error("baseUrl must use HTTPS for security", base_url);
+  }
+  if (parsed_url.username !== "" || parsed_url.password !== "") {
+    throw_base_url_error("baseUrl must not contain userinfo", base_url);
+  }
+  if (parsed_url.search !== "" || parsed_url.hash !== "") {
+    throw_base_url_error(
+      "baseUrl must not contain a query string or fragment",
+      base_url,
+    );
+  }
+  if (
+    parsed_url.origin !== DEFAULT_BASE_ORIGIN &&
+    !allow_unsafe_custom_base_url
+  ) {
+    throw_base_url_error(
+      "baseUrl must use the official Monime API origin unless allowUnsafeCustomBaseUrl is true",
+      base_url,
+    );
+  }
+  return parsed_url.href.replace(/\/+$/, "");
+}
+
+/**
+ * @param {string} message
+ * @param {string} value
+ * @returns {never}
+ */
+function throw_base_url_error(message, value) {
+  throw new MonimeValidationError(message, [
+    { message, field: "baseUrl", value },
+  ]);
+}
 
 /**
  * @param {string} field
@@ -48,7 +101,10 @@ function throw_option_error(field, message, value) {
   throw new MonimeValidationError(message, [{ field, message, value }]);
 }
 
-/** @param {unknown} options */
+/**
+ * @param {unknown} options
+ * @returns {string}
+ */
 function validate_client_options(options) {
   if (
     options === null ||
@@ -67,10 +123,20 @@ function validate_client_options(options) {
   }
 
   const base_url = client_options.baseUrl;
-  if (base_url !== undefined) {
-    if (typeof base_url !== "string" || !base_url.startsWith("https://")) {
-      throw_option_error("baseUrl", "baseUrl must be an HTTPS URL", base_url);
-    }
+  if (base_url !== undefined && typeof base_url !== "string") {
+    throw_option_error("baseUrl", "baseUrl must be an HTTPS URL", base_url);
+  }
+
+  const allow_unsafe_custom_base_url = client_options.allowUnsafeCustomBaseUrl;
+  if (
+    allow_unsafe_custom_base_url !== undefined &&
+    typeof allow_unsafe_custom_base_url !== "boolean"
+  ) {
+    throw_option_error(
+      "allowUnsafeCustomBaseUrl",
+      "allowUnsafeCustomBaseUrl must be a boolean",
+      allow_unsafe_custom_base_url,
+    );
   }
 
   for (const field of ["timeout", "retryDelay", "retryBackoff"]) {
@@ -98,6 +164,11 @@ function validate_client_options(options) {
       retries,
     );
   }
+
+  return validate_base_url(
+    base_url ?? DEFAULT_BASE_URL,
+    allow_unsafe_custom_base_url === true,
+  );
 }
 
 /**
@@ -121,8 +192,8 @@ class MonimeHttpClient {
   #retry_backoff;
   /** @param {ClientOptions} options */
   constructor(options) {
-    validate_client_options(options);
-    this.#base_url = options.baseUrl ?? DEFAULT_BASE_URL;
+    const base_url = validate_client_options(options);
+    this.#base_url = base_url;
     this.#space_id = options.spaceId;
     this.#access_token = options.accessToken;
     this.#timeout = options.timeout ?? DEFAULT_TIMEOUT;

@@ -6,8 +6,13 @@ export type ClientOptions = {
   spaceId: string;
   /** API access token for authentication */
   accessToken: string;
-  /** Base URL for API requests (defaults to Monime production API) */
+  /** Base URL for API requests. Custom origins require allowUnsafeCustomBaseUrl. */
   baseUrl?: string;
+  /**
+   * Allow credentials to be sent to a custom HTTPS baseUrl origin.
+   * WARNING: enabling this can expose your access token and space ID to that origin.
+   */
+  allowUnsafeCustomBaseUrl?: boolean;
   /** Request timeout in milliseconds */
   timeout?: number;
   /** Maximum number of retry attempts for failed requests */

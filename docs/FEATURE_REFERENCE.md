@@ -108,21 +108,24 @@ values can be used without waiting for an SDK release. Monime API errors are
 authoritative.
 
 The HTTP client only validates options needed for safe SDK execution, such as
-credentials, retry numbers, timeout values, and HTTPS for a custom base URL.
+credentials, retry numbers, timeout values, and the origin of a custom base
+URL.
 
-### HTTPS Enforcement
+### Base URL credential safety
 
 ```javascript
-if (options.baseUrl !== undefined && !options.baseUrl.startsWith("https://")) {
-  throw new MonimeValidationError("baseUrl must use HTTPS for security", [
-    {
-      message: "baseUrl must use HTTPS for security",
-      field: "baseUrl",
-      value: options.baseUrl,
-    },
-  ]);
-}
+const client = new MonimeClient({
+  spaceId,
+  accessToken,
+  baseUrl: "https://trusted-proxy.example",
+  allowUnsafeCustomBaseUrl: true,
+});
 ```
+
+By default, credentials are sent only to the official `https://api.monime.io`
+origin. Custom origins must use HTTPS and require the explicit
+`allowUnsafeCustomBaseUrl` opt-in. Enabling it forwards the bearer token and
+space ID to that origin, so use it only with a proxy you trust.
 
 ---
 
@@ -251,6 +254,7 @@ if (method === "POST") {
  * @property {string} spaceId - Required, non-empty string
  * @property {string} accessToken - Required
  * @property {string} [baseUrl] - Default: "https://api.monime.io"
+ * @property {boolean} [allowUnsafeCustomBaseUrl] - Explicitly allow credentials on a custom HTTPS origin. Default: false
  * @property {number} [timeout] - Default: 30000ms
  * @property {number} [retries] - Default: 2
  * @property {number} [retryDelay] - Default: 1000ms
