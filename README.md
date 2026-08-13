@@ -42,11 +42,11 @@ Unofficial lightweight and easy js/ts SDK for interacting with monime's endpoint
   - [x] USSD OTP
 - [x] **Client-based** auth: set credentials once per instance
 - [x] **Predictable** return shape fully typed: `{ success, result, messages }` and `{ success, messages }` for lists with pagination
-- [x] **Error handling** with typed error classes and validation details
+- [x] **Error handling** with typed API, client configuration, timeout, and network errors
 - [x] **Timeout configuration** with per-request overrides
 - [x] **Retry logic** with exponential backoff and Retry-After header support
 - [x] **AbortController support** for request cancellation
-- [x] **Input validation** with detailed field-level error messages
+- [x] **Forward-compatible requests** sent directly to Monime for authoritative validation
 - [x] **Idempotency** keys auto-generated for POST requests
 
 ---
@@ -67,8 +67,6 @@ Recommended to store credentials in `.env`:
 MONIME_SPACE_ID=spc-your-space-id
 MONIME_ACCESS_TOKEN=your-access-token
 ```
-
-> **Note:** The space ID must start with `spc-` prefix.
 
 You can also pass credentials directly when creating the client.
 
@@ -140,6 +138,15 @@ For type definitions, the package exports JSDoc comments and TypeScript declarat
 
 The SDK provides typed error classes for different failure scenarios:
 
+Request payloads, IDs, and query parameters are sent to Monime without local
+validation. `MonimeApiError` contains the authoritative Monime API error.
+`MonimeValidationError` is reserved for invalid client execution options.
+
+This differs from versions that used Valibot. The SDK no longer rejects invalid
+resource IDs, unsupported values, fractional amounts, or empty updates before a
+request. It also no longer strips unknown fields. Remove `validateInputs` from
+client configuration because that option no longer exists.
+
 ```javascript
 import {
   MonimeClient,
@@ -161,8 +168,8 @@ try {
     // Request timed out
     console.log(error.timeout); // Timeout value in ms
   } else if (error instanceof MonimeValidationError) {
-    // Input validation failed
-    console.log(error.issues);  // Array of validation issues
+    // Client execution configuration is invalid
+    console.log(error.issues);  // Array of client option issues
     error.issues.forEach((issue) => {
       console.log(`${issue.field}: ${issue.message}`);
     });

@@ -4,7 +4,6 @@ import {
   MonimeTimeoutError,
   MonimeValidationError,
 } from "./errors.js";
-import { ClientOptionsSchema, validate } from "./validation.js";
 
 /** @typedef {import("./index.d.ts").ClientOptions} ClientOptions */
 /** @typedef {import("./index.d.ts").RequestConfig} RequestConfig */
@@ -40,6 +39,68 @@ const DEFAULT_RETRY_BACKOFF = 2;
 const DEFAULT_BASE_URL = "https://api.monime.io";
 
 /**
+ * @param {string} field
+ * @param {string} message
+ * @param {unknown} value
+ * @returns {never}
+ */
+function throw_option_error(field, message, value) {
+  throw new MonimeValidationError(message, [{ field, message, value }]);
+}
+
+/** @param {unknown} options */
+function validate_client_options(options) {
+  if (
+    options === null ||
+    typeof options !== "object" ||
+    Array.isArray(options)
+  ) {
+    throw_option_error("options", "options must be a non-null object", options);
+  }
+
+  const client_options = /** @type {Record<string, unknown>} */ (options);
+  for (const field of ["spaceId", "accessToken"]) {
+    const value = client_options[field];
+    if (typeof value !== "string" || value.length === 0) {
+      throw_option_error(field, `${field} must be a non-empty string`, value);
+    }
+  }
+
+  const base_url = client_options.baseUrl;
+  if (base_url !== undefined) {
+    if (typeof base_url !== "string" || !base_url.startsWith("https://")) {
+      throw_option_error("baseUrl", "baseUrl must be an HTTPS URL", base_url);
+    }
+  }
+
+  for (const field of ["timeout", "retryDelay", "retryBackoff"]) {
+    const value = client_options[field];
+    if (
+      value !== undefined &&
+      (typeof value !== "number" || !Number.isFinite(value) || value < 0)
+    ) {
+      throw_option_error(
+        field,
+        `${field} must be a finite non-negative number`,
+        value,
+      );
+    }
+  }
+
+  const retries = client_options.retries;
+  if (
+    retries !== undefined &&
+    (typeof retries !== "number" || !Number.isInteger(retries) || retries < 0)
+  ) {
+    throw_option_error(
+      "retries",
+      "retries must be a non-negative integer",
+      retries,
+    );
+  }
+}
+
+/**
  * Internal HTTP client for making requests to the Monime API.
  * Handles authentication, retries, timeouts, and error handling.
  */
@@ -58,26 +119,9 @@ class MonimeHttpClient {
   #retry_delay;
   /** @type {number} */
   #retry_backoff;
-  /** @type {boolean} */
-  #validate_inputs;
-
   /** @param {ClientOptions} options */
   constructor(options) {
-    if (
-      options.baseUrl !== undefined &&
-      !options.baseUrl.startsWith("https://")
-    ) {
-      throw new MonimeValidationError("baseUrl must use HTTPS for security", [
-        {
-          message: "baseUrl must use HTTPS for security",
-          field: "baseUrl",
-          value: options.baseUrl,
-        },
-      ]);
-    }
-    if (options.validateInputs !== false) {
-      validate(ClientOptionsSchema, options);
-    }
+    validate_client_options(options);
     this.#base_url = options.baseUrl ?? DEFAULT_BASE_URL;
     this.#space_id = options.spaceId;
     this.#access_token = options.accessToken;
@@ -85,14 +129,6 @@ class MonimeHttpClient {
     this.#retries = options.retries ?? DEFAULT_RETRIES;
     this.#retry_delay = options.retryDelay ?? DEFAULT_RETRY_DELAY;
     this.#retry_backoff = options.retryBackoff ?? DEFAULT_RETRY_BACKOFF;
-    this.#validate_inputs = options.validateInputs ?? true;
-  }
-  /**
-   * Whether input validation is enabled
-   * @returns {boolean}
-   */
-  get should_validate() {
-    return this.#validate_inputs;
   }
 
   /**
@@ -103,7 +139,6 @@ class MonimeHttpClient {
    * @throws {MonimeApiError} When the API returns an error response
    * @throws {MonimeTimeoutError} When the request times out
    * @throws {MonimeNetworkError} When a network error occurs
-   * @throws {MonimeValidationError} When input validation fails
    */
   async request(options) {
     const { method, path, body, params, config } = options;

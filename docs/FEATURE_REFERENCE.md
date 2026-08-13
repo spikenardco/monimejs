@@ -24,7 +24,7 @@ MonimeClient
                               ├── Timeout handling
                               ├── Retry with backoff
                               ├── AbortController support
-                              └── Input validation
+                              └── Client option validation
 ```
 
 ---
@@ -100,35 +100,15 @@ Prevents crashes when server returns HTML error pages (proxies, CDNs).
 
 ---
 
-## 2. Validation (`src/validation.js` + `src/schemas.js`)
+## 2. Validation responsibility
 
-### Schema Library
+API request payloads, IDs, query parameters, and business rules are not
+validated by the SDK. They are forwarded unchanged so new Monime fields and
+values can be used without waiting for an SDK release. Monime API errors are
+authoritative.
 
-Uses [Valibot](https://valibot.dev/) (~10KB) for schema validation.
-
-### Validation Points
-
-| When | What | Schema |
-|------|------|--------|
-| Client init | `spaceId`, `accessToken`, `baseUrl` | `ClientOptionsSchema` |
-| Before request | Resource IDs (`pmc-*`, `pay-*`, etc.) | `*IdSchema` |
-| Before create | Input fields | `Create*InputSchema` |
-| Before update | Update fields | `Update*InputSchema` |
-| List params | `limit` (1-50) | `LimitSchema` |
-
-### ID Prefix Validation
-
-Each resource type has a required prefix:
-
-| Resource | Prefix |
-|----------|--------|
-| Payment Code | `pmc-` |
-| Payment | `pay-` |
-| Checkout Session | `cos-` |
-| Payout | `pot-` |
-| Webhook | `whk-` |
-| Internal Transfer | `trn-` |
-| USSD OTP | `uop-` |
+The HTTP client only validates options needed for safe SDK execution, such as
+credentials, retry numbers, timeout values, and HTTPS for a custom base URL.
 
 ### HTTPS Enforcement
 
@@ -154,7 +134,7 @@ if (options.baseUrl !== undefined && !options.baseUrl.startsWith("https://")) {
 MonimeError (base)
 ├── MonimeApiError      - API returned 4xx/5xx
 ├── MonimeTimeoutError  - Request timed out
-├── MonimeValidationError - Input validation failed
+├── MonimeValidationError - Client execution options are invalid
 └── MonimeNetworkError  - Connection failed
 ```
 
@@ -205,9 +185,6 @@ export class XxxModule {
    * @returns {Promise<XxxResponse>}
    */
   async create(input, config) {
-    if (this.http_client.should_validate) {
-      validate(CreateXxxInputSchema, input);
-    }
     return this.http_client.request({
       method: "POST",
       path: "/xxx",
@@ -216,10 +193,10 @@ export class XxxModule {
     });
   }
 
-  async get(id, config) { /* validate ID, GET request */ }
-  async list(params, config) { /* validate limit, GET with query params */ }
-  async update(id, input, config) { /* validate ID + input, PATCH request */ }
-  async delete(id, config) { /* validate ID, DELETE request */ }
+  async get(id, config) { /* forward ID in a GET request */ }
+  async list(params, config) { /* forward query params in a GET request */ }
+  async update(id, input, config) { /* forward ID and input in a PATCH request */ }
+  async delete(id, config) { /* forward ID in a DELETE request */ }
 }
 ```
 
@@ -271,14 +248,13 @@ if (method === "POST") {
 ```javascript
 /**
  * @typedef {object} ClientOptions
- * @property {string} spaceId - Required, must start with "spc-"
+ * @property {string} spaceId - Required, non-empty string
  * @property {string} accessToken - Required
  * @property {string} [baseUrl] - Default: "https://api.monime.io"
  * @property {number} [timeout] - Default: 30000ms
  * @property {number} [retries] - Default: 2
  * @property {number} [retryDelay] - Default: 1000ms
  * @property {number} [retryBackoff] - Default: 2
- * @property {boolean} [validateInputs] - Default: true
  */
 
 /**
@@ -303,13 +279,11 @@ esbuild src/index.ts \
   --outfile=dist/index.js \
   --target=node20 \
   --minify \
-  --tree-shaking=true \
-  --external:valibot
+  --tree-shaking=true
 ```
 
 - **ESM only** - No CommonJS build
 - **Node 20+** - Required for `AbortSignal.any()`
-- **External valibot** - Not bundled, listed as dependency
 - **Minified** - 20.1KB output
 
 ### TypeScript Declaration Generation
@@ -328,7 +302,6 @@ Generates bundled `.d.ts` file for type hints in consumers. All types are merged
 |-------|------------|---------|
 | Public API | camelCase | `paymentCode.create()`, `financialAccount.get()` |
 | Private members | snake_case | `http_client`, `build_url()`, `execute_request()` |
-| Private getters | snake_case | `should_validate` |
 | Constants | UPPER_SNAKE | `API_VERSION`, `DEFAULT_TIMEOUT` |
 | Types | PascalCase | `ClientOptions`, `PaymentCode` |
 | Request methods | UPPER_CASE | `GET`, `POST`, `PATCH`, `DELETE` |
@@ -373,12 +346,6 @@ class XxxModule {
 Modules are instantiated once in `MonimeClient` constructor and reused for the client's lifetime.
 
 ---
-
-## Key Dependencies
-
-| Package | Purpose | Size |
-|---------|---------|------|
-| `valibot` | Schema validation | ~10KB |
 
 **Build Output:**
 - `dist/index.js` - Minified bundle | 20.1KB

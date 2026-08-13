@@ -1,11 +1,3 @@
-import {
-  CreateFinancialAccountInputSchema,
-  IdSchema,
-  LimitSchema,
-  UpdateFinancialAccountInputSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").FinancialAccount>} FinancialAccountListResponse */
 /** @typedef {import("./index.d.ts").ApiResponse<import("./index.d.ts").FinancialAccount>} FinancialAccountResponse */
@@ -51,17 +43,13 @@ class FinancialAccountModule {
    * @param {CreateFinancialAccountInput} input - Financial account configuration including name and currency
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountResponse>} The created financial account
-   * @throws {MonimeValidationError} If input validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    const validated_input = this.#http_client.should_validate
-      ? validate(CreateFinancialAccountInputSchema, input)
-      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/financial-accounts",
-      body: validated_input,
+      body: input,
       config,
     });
   }
@@ -71,22 +59,13 @@ class FinancialAccountModule {
    * @param {GetFinancialAccountParams} [params] - Optional parameters
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountResponse>} The financial account
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(id, params, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
-    const query_params = params
-      ? {
-          withBalance: params.withBalance,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: `/financial-accounts/${encodeURIComponent(id)}`,
-      params: query_params,
+      params,
       config,
     });
   }
@@ -95,26 +74,13 @@ class FinancialAccountModule {
    * @param {ListFinancialAccountsParams} [params] - Optional filter and pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountListResponse>} A paginated list of financial accounts
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate && params?.limit !== undefined) {
-      validate(LimitSchema, params.limit);
-    }
-    const query_params = params
-      ? {
-          uvan: params.uvan,
-          reference: params.reference,
-          withBalance: params.withBalance,
-          limit: params.limit,
-          after: params.after,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: "/financial-accounts",
-      params: query_params,
+      params,
       config,
     });
   }
@@ -124,20 +90,13 @@ class FinancialAccountModule {
    * @param {UpdateFinancialAccountInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountResponse>} The updated financial account
-   * @throws {MonimeValidationError} If validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async update(id, input, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
-    const validated_input = this.#http_client.should_validate
-      ? validate(UpdateFinancialAccountInputSchema, input)
-      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/financial-accounts/${encodeURIComponent(id)}`,
-      body: validated_input,
+      body: input,
       config,
     });
   }

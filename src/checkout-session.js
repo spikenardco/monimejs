@@ -1,10 +1,3 @@
-import {
-  CreateCheckoutSessionInputSchema,
-  IdSchema,
-  LimitSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiDeleteResponse} ApiDeleteResponse */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").CheckoutSession>} CheckoutSessionListResponse */
@@ -43,17 +36,13 @@ class CheckoutSessionModule {
    * @param {CreateCheckoutSessionInput} input - Checkout session configuration including line items
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<CheckoutSessionResponse>} The created checkout session with redirect URL
-   * @throws {MonimeValidationError} If input validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    const validated_input = this.#http_client.should_validate
-      ? validate(CreateCheckoutSessionInputSchema, input)
-      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/checkout-sessions",
-      body: validated_input,
+      body: input,
       config,
     });
   }
@@ -62,13 +51,9 @@ class CheckoutSessionModule {
    * @param {string} id - The checkout session ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<CheckoutSessionResponse>} The checkout session
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/checkout-sessions/${encodeURIComponent(id)}`,
@@ -80,23 +65,13 @@ class CheckoutSessionModule {
    * @param {ListCheckoutSessionsParams} [params] - Optional pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<CheckoutSessionListResponse>} A paginated list of checkout sessions
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate && params?.limit !== undefined) {
-      validate(LimitSchema, params.limit);
-    }
-    const query_params = params
-      ? {
-          limit: params.limit,
-          after: params.after,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: "/checkout-sessions",
-      params: query_params,
+      params,
       config,
     });
   }
@@ -105,13 +80,9 @@ class CheckoutSessionModule {
    * @param {string} id - The checkout session ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async delete(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "DELETE",
       path: `/checkout-sessions/${encodeURIComponent(id)}`,

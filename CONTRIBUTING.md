@@ -95,7 +95,6 @@ npm run format
    - Core client logic: `client.js`
    - HTTP handling: `http-client.js`
    - Type definitions: `index.js` (with JSDoc)
-   - Input schemas/validation: `schemas.js`, `validation.js`
    - Error classes: `errors.js`
    - Feature modules: `payment.js`, `payout.js`, etc.
 
@@ -110,10 +109,10 @@ npm run format
    - Use specific error types: `MonimeApiError`, `MonimeValidationError`, `MonimeTimeoutError`, `MonimeNetworkError`
    - Include descriptive messages and context
 
-4. **Validation**:
-   - Use Valibot schemas for input validation
-   - Schemas defined in `schemas.js`
-   - Validation functions in `validation.js`
+4. **Request validation**:
+   - Do not duplicate Monime request rules in the SDK
+   - Forward request values unchanged and let Monime return authoritative API errors
+   - Validate only SDK execution and security invariants, such as client options and webhook signatures
 
 5. **Documentation**:
    - Add JSDoc comments to public methods

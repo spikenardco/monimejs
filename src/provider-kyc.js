@@ -1,9 +1,3 @@
-import {
-  ProviderKycAccountIdSchema,
-  ProviderKycProviderIdSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiResponse<import("./index.d.ts").ProviderKyc>} ProviderKycResponse */
 /** @typedef {import("./index.d.ts").GetProviderKycParams} GetProviderKycParams */
@@ -43,18 +37,13 @@ class ProviderKycModule {
    * @param {GetProviderKycParams} params - Query parameters; must include `accountId`
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<ProviderKycResponse>} The provider KYC profile
-   * @throws {MonimeValidationError} If validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(providerId, params, config) {
-    if (this.#http_client.should_validate) {
-      validate(ProviderKycProviderIdSchema, providerId);
-      validate(ProviderKycAccountIdSchema, params?.accountId);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/provider-kyc/${encodeURIComponent(providerId)}`,
-      params: { accountId: params.accountId },
+      params,
       config,
     });
   }
