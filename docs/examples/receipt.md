@@ -18,7 +18,7 @@ Redeem all available entitlements on a receipt at once.
 const { success, result } = await client.receipt.redeem(
   "ORDER-12345",
   { redeemAll: true },
-  "unique-idempotency-key-001",
+  { idempotencyKey: "unique-idempotency-key-001" },
 );
 ```
 
@@ -35,7 +35,7 @@ const { success, result } = await client.receipt.redeem(
       { key: "voucher-drink", units: 1 },
     ],
   },
-  "unique-idempotency-key-002",
+  { idempotencyKey: "unique-idempotency-key-002" },
 );
 ```
 
@@ -49,7 +49,7 @@ const { success, result } = await client.receipt.redeem(
   {
     entitlements: [{ key: "ticket-vip" }],
   },
-  "unique-idempotency-key-003",
+  { idempotencyKey: "unique-idempotency-key-003" },
 );
 ```
 
@@ -69,6 +69,6 @@ const { success, result } = await client.receipt.redeem(
       timestamp: new Date().toISOString(),
     },
   },
-  "unique-idempotency-key-004",
+  { idempotencyKey: "unique-idempotency-key-004" },
 );
 ```

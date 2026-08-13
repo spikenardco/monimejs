@@ -84,7 +84,7 @@ List only recurrent payment codes for subscription and installment management.
 ```javascript
 const { success, result } = await client.paymentCode.list({
   mode: "recurrent",
-  limit: 100,
+  limit: 50,
 });
 ```
 
