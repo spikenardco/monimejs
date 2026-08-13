@@ -256,7 +256,9 @@ class MonimeHttpClient {
       });
       let data;
       try {
-        data = await res.json();
+        const response_text = await res.text();
+        data =
+          response_text.length === 0 ? undefined : JSON.parse(response_text);
       } catch {
         throw new MonimeApiError(
           `Invalid JSON response from server: ${res.status} ${res.statusText}`,
@@ -268,7 +270,7 @@ class MonimeHttpClient {
       if (!res.ok) {
         const retry_after = this.#parse_retry_after(res.headers);
         const error_response = /** @type {ApiErrorResponse} */ (data);
-        if (error_response.error) {
+        if (error_response?.error) {
           throw new MonimeApiError(
             error_response.error.message,
             error_response.error.code,
@@ -284,6 +286,9 @@ class MonimeHttpClient {
           [],
           retry_after,
         );
+      }
+      if (data === undefined) {
+        return /** @type {T} */ ({ success: true, messages: [] });
       }
       return /** @type {T} */ (data);
     } catch (error) {
