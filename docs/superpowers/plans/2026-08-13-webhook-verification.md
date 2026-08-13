@@ -16,6 +16,7 @@
 - Add no dependency.
 - Keep every commit independently reviewable and green.
 - Write plain technical prose without promotional wording or unsupported claims.
+- Use camelCase for public API names and snake_case for internal code.
 
 ---
 

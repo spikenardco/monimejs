@@ -37,6 +37,8 @@ Sources:
 
 The direct header value is clearer than accepting every request header. It also works across Node HTTP, Express, Fetch, and other frameworks without framework-specific header types.
 
+Public API names use camelCase. Private helpers, local variables, and other internal names use snake_case, matching the existing source.
+
 `MonimeWebhookVerificationError.reason` provides stable failure categories:
 
 - `signature_header_invalid`
