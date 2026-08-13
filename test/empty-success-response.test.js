@@ -22,7 +22,7 @@ function mock_response(response) {
   globalThis.fetch = async () => response;
 }
 
-test("returns the delete response shape for a 204 response", async () => {
+test("returns the delete response shape for an empty 204 response", async () => {
   mock_response(new Response(null, { status: 204 }));
 
   const result = await create_client().request({
