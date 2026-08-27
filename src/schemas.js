@@ -15,7 +15,7 @@ function has_update_field(input) {
 const CurrencySchema = v.picklist(["SLE", "USD"]);
 const AmountSchema = v.object({
   currency: CurrencySchema,
-  value: v.pipe(v.number(), v.minValue(0)),
+  value: v.pipe(v.number(), v.integer(), v.minValue(0)),
 });
 const MetadataSchema = v.pipe(
   v.record(v.string(), v.pipe(v.string(), v.maxLength(100))),
