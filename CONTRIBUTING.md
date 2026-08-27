@@ -55,7 +55,6 @@ npm run build
 
 | Script | Purpose |
 |--------|---------|
-| `npm test` | Run the test suite |
 | `npm run format` | Format code with Biome |
 | `npm run format:check` | Check formatting without changes |
 | `npm run typecheck` | Type-check JavaScript and JSDoc |
@@ -136,28 +135,6 @@ docs: add AbortController example
 ```
 
 Use conventional commit format when possible.
-
-### Testing Your Changes
-
-1. **Build locally**:
-   ```bash
-   npm run build
-   ```
-
-2. **Check formatting**:
-   ```bash
-   npm run format:check
-   ```
-
-3. **Fix formatting issues**:
-   ```bash
-   npm run format
-   ```
-
-4. **Verify no TypeScript errors**:
-   ```bash
-   npm run build
-   ```
 
 ---
 
