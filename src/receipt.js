@@ -75,12 +75,14 @@ class ReceiptModule {
   async redeem(orderNumber, input, config) {
     if (this.#http_client.should_validate) {
       validate(ReceiptOrderNumberSchema, orderNumber);
-      validate(RedeemReceiptInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(RedeemReceiptInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: `/receipts/${encodeURIComponent(orderNumber)}/redeem`,
-      body: input,
+      body: validated_input,
       config,
     });
   }

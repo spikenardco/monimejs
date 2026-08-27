@@ -3,7 +3,6 @@ import * as v from "valibot";
 /**
  * @template {v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>} T
  * @param {T} schema
- * @returns {v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>}
  */
 function optional_nullable(schema) {
   return v.optional(v.nullable(schema));

@@ -52,13 +52,13 @@ class UssdOtpModule {
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreateUssdOtpInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreateUssdOtpInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/ussd-otps",
-      body: input,
+      body: validated_input,
       config,
     });
   }

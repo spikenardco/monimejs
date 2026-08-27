@@ -47,13 +47,13 @@ class CheckoutSessionModule {
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreateCheckoutSessionInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreateCheckoutSessionInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/checkout-sessions",
-      body: input,
+      body: validated_input,
       config,
     });
   }

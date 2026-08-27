@@ -48,13 +48,13 @@ class PaymentCodeModule {
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreatePaymentCodeInputSchema, input);
-    }
+    const validated_input = this.#http_client.should_validate
+      ? validate(CreatePaymentCodeInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "POST",
       path: "/payment-codes",
-      body: input,
+      body: validated_input,
       config,
     });
   }
@@ -116,12 +116,14 @@ class PaymentCodeModule {
   async update(id, input, config) {
     if (this.#http_client.should_validate) {
       validate(IdSchema, id);
-      validate(UpdatePaymentCodeInputSchema, input);
     }
+    const validated_input = this.#http_client.should_validate
+      ? validate(UpdatePaymentCodeInputSchema, input)
+      : input;
     return this.#http_client.request({
       method: "PATCH",
       path: `/payment-codes/${encodeURIComponent(id)}`,
-      body: input,
+      body: validated_input,
       config,
     });
   }

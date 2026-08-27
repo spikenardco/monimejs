@@ -74,6 +74,7 @@ function to_validation_error(issues) {
  * @template T - The expected type of valid data (inferred from schema)
  * @param {v.BaseSchema<unknown, T, v.BaseIssue<unknown>>} schema - A valibot schema to validate against
  * @param {unknown} data - Unknown input data to validate
+ * @returns {T} The parsed output produced by the schema
  * @throws {MonimeValidationError} If validation fails with details about validation issues
  */
 function validate(schema, data) {
@@ -81,6 +82,7 @@ function validate(schema, data) {
   if (!result.success) {
     throw to_validation_error(result.issues);
   }
+  return result.output;
 }
 
 export {
