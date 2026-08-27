@@ -84,15 +84,13 @@ class MonimeClient {
    *
    * @param {ClientOptions} options - Client configuration options
    * @param {object} options - Options object
-   * @param {string} options.spaceId - Your Monime space ID (must start with "spc-")
+   * @param {string} options.spaceId - Your Monime space ID
    * @param {string} options.accessToken - Your Monime API access token
    * @param {string} [options.baseUrl] - Optional custom API base URL (must use HTTPS)
    * @param {number} [options.timeout] - Request timeout in milliseconds (default: 30000)
    * @param {number} [options.retries] - Number of retry attempts (default: 2)
    * @param {number} [options.retryDelay] - Initial retry delay in milliseconds (default: 1000)
    * @param {number} [options.retryBackoff] - Retry backoff multiplier (default: 2)
-   * @param {boolean} [options.validateInputs] - Whether to validate inputs before requests (default: true)
-   *
    * @throws {MonimeValidationError} If options validation fails
    *
    * @example

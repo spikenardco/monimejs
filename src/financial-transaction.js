@@ -1,5 +1,3 @@
-import { IdSchema, LimitSchema, validate } from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").FinancialTransaction>} FinancialTransactionListResponse */
 /** @typedef {import("./index.d.ts").ApiResponse<import("./index.d.ts").FinancialTransaction>} FinancialTransactionResponse */
@@ -46,13 +44,9 @@ class FinancialTransactionModule {
    * @param {string} id - The financial transaction ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<FinancialTransactionResponse>} The financial transaction
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/financial-transactions/${encodeURIComponent(id)}`,
@@ -64,26 +58,13 @@ class FinancialTransactionModule {
    * @param {ListFinancialTransactionsParams} [params] - Optional filter and pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<FinancialTransactionListResponse>} A paginated list of financial transactions
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate && params?.limit !== undefined) {
-      validate(LimitSchema, params.limit);
-    }
-    const query_params = params
-      ? {
-          financialAccountId: params.financialAccountId,
-          reference: params.reference,
-          type: params.type,
-          limit: params.limit,
-          after: params.after,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: "/financial-transactions",
-      params: query_params,
+      params,
       config,
     });
   }

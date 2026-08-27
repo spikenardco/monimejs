@@ -16,8 +16,6 @@ export type ClientOptions = {
   retryDelay?: number;
   /** Multiplier for exponential backoff between retries */
   retryBackoff?: number;
-  /** Whether to validate input data before sending requests */
-  validateInputs?: boolean;
 };
 
 /**

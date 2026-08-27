@@ -1,6 +1,6 @@
 # Error Handling Examples
 
-The SDK provides typed error classes for different failure scenarios: validation errors, API errors, timeouts, and network errors.
+The SDK provides typed error classes for API errors, invalid client execution options, timeouts, and network errors. Request payloads, IDs, and query parameters are not validated locally. Monime API errors are authoritative.
 
 ## Basic error handling
 
@@ -18,7 +18,7 @@ try {
   });
 } catch (error) {
   if (error instanceof MonimeValidationError) {
-    console.log(`Validation error: ${error.message}`);
+    console.log(`Client configuration error: ${error.message}`);
     for (const issue of error.issues) {
       console.log(`  - ${issue.field}: ${issue.message}`);
     }

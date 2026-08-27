@@ -1,11 +1,3 @@
-import {
-  CreateInternalTransferInputSchema,
-  IdSchema,
-  LimitSchema,
-  UpdateInternalTransferInputSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiDeleteResponse} ApiDeleteResponse */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").InternalTransfer>} InternalTransferListResponse */
@@ -50,13 +42,9 @@ class InternalTransferModule {
    * @param {CreateInternalTransferInput} input - Transfer configuration including amount and accounts
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferResponse>} The created internal transfer
-   * @throws {MonimeValidationError} If input validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async create(input, config) {
-    if (this.#http_client.should_validate) {
-      validate(CreateInternalTransferInputSchema, input);
-    }
     return this.#http_client.request({
       method: "POST",
       path: "/internal-transfers",
@@ -69,13 +57,9 @@ class InternalTransferModule {
    * @param {string} id - The internal transfer ID (must start with "trn-")
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferResponse>} The internal transfer
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/internal-transfers/${encodeURIComponent(id)}`,
@@ -87,27 +71,13 @@ class InternalTransferModule {
    * @param {ListInternalTransfersParams} [params] - Optional filter and pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferListResponse>} A paginated list of internal transfers
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate && params?.limit !== undefined) {
-      validate(LimitSchema, params.limit);
-    }
-    const query_params = params
-      ? {
-          status: params.status,
-          sourceFinancialAccountId: params.sourceFinancialAccountId,
-          destinationFinancialAccountId: params.destinationFinancialAccountId,
-          financialTransactionReference: params.financialTransactionReference,
-          limit: params.limit,
-          after: params.after,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: "/internal-transfers",
-      params: query_params,
+      params,
       config,
     });
   }
@@ -117,14 +87,9 @@ class InternalTransferModule {
    * @param {UpdateInternalTransferInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferResponse>} The updated internal transfer
-   * @throws {MonimeValidationError} If validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async update(id, input, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-      validate(UpdateInternalTransferInputSchema, input);
-    }
     return this.#http_client.request({
       method: "PATCH",
       path: `/internal-transfers/${encodeURIComponent(id)}`,
@@ -137,13 +102,9 @@ class InternalTransferModule {
    * @param {string} id - The internal transfer ID (must start with "trn-")
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async delete(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "DELETE",
       path: `/internal-transfers/${encodeURIComponent(id)}`,
