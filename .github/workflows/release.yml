@@ -46,6 +46,9 @@ jobs:
       - name: Build
         run: npm run build:clean
 
+      - name: Typecheck package contract
+        run: npm run typecheck:contracts
+
       - name: Publish package (OIDC Trusted Publishing)
         run: npm run release
 
