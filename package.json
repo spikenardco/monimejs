@@ -28,13 +28,11 @@
     "format": "biome check --write .",
     "format:check": "biome check .",
     "typecheck": "tsc --noEmit",
-    "typecheck:contracts": "tsc --project tsconfig.types-contract.json",
+    "typecheck:contracts": "tsc --ignoreConfig --noEmit --module ESNext --moduleResolution bundler --target ESNext --strict --types node types/client-modules.ts",
     "build": "npm run build:js && npm run build:types",
     "build:js": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true",
-    "build:types": "tsc --project tsconfig.declarations.json && cp src/index.d.ts dist/index.d.ts",
-    "build:clean": "rm -rf dist && npm run build",
-    "prepublishOnly": "npm run build:clean",
-    "release": "npm publish --provenance --access public"
+    "build:types": "tsc --noEmit false --emitDeclarationOnly --rootDir src && cp src/index.d.ts dist/index.d.ts",
+    "prepublishOnly": "npm run build"
   },
   "repository": {
     "type": "git",
@@ -67,9 +65,9 @@
   },
   "homepage": "https://github.com/spikenardco/monimejs#readme",
   "devDependencies": {
-    "@biomejs/biome": "^2.4.14",
-    "@types/node": "^25.6.2",
-    "esbuild": "^0.28.0",
-    "typescript": "^6.0.3"
+    "@biomejs/biome": "^2.5.10",
+    "@types/node": "^26.4.0",
+    "esbuild": "^0.28.2",
+    "typescript": "^7.0.2"
   }
 }

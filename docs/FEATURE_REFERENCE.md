@@ -274,13 +274,7 @@ if (method === "POST") {
 ### esbuild Configuration
 
 ```bash
-esbuild src/index.ts \
-  --bundle \
-  --format=esm \
-  --outfile=dist/index.js \
-  --target=node20 \
-  --minify \
-  --tree-shaking=true
+npm run build
 ```
 
 - **ESM only** - No CommonJS build
@@ -289,10 +283,7 @@ esbuild src/index.ts \
 
 ### TypeScript Declaration Generation
 
-```bash
-tsc --project tsconfig.declarations.json
-cp src/index.d.ts dist/index.d.ts
-```
+Declaration generation is part of `npm run build` via `tsc --noEmit false --emitDeclarationOnly --rootDir src`.
 
 TypeScript generates declarations for the JavaScript modules from their JSDoc comments. The checked-in `src/index.d.ts` remains the public type barrel, while the generated module declarations are internal dependencies of `dist/client.d.ts`.
 

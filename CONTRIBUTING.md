@@ -49,26 +49,18 @@ npm install
 ```bash
 # Full build (JS + Types)
 npm run build
-
-# Clean build (removes dist/ first)
-npm run build:clean
-
-# Build only JavaScript
-npm run build:js
-
-# Build only Type Declarations
-npm run build:types
 ```
 
 ### Available Scripts
 
 | Script | Purpose |
 |--------|---------|
+| `npm test` | Run the test suite |
 | `npm run format` | Format code with Biome |
 | `npm run format:check` | Check formatting without changes |
 | `npm run typecheck` | Type-check JavaScript and JSDoc |
 | `npm run typecheck:contracts` | Type-check the built package API |
-| `npm run build:clean` | Clean build (recommended before commits) |
+| `npm run build` | Build JavaScript and declarations |
 
 ---
 
@@ -150,7 +142,7 @@ Use conventional commit format when possible.
 
 1. **Build locally**:
    ```bash
-   npm run build:clean
+   npm run build
    ```
 
 2. **Check formatting**:
