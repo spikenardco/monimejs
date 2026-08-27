@@ -59,7 +59,6 @@ npm run build
 | `npm run format` | Format code with Biome |
 | `npm run format:check` | Check formatting without changes |
 | `npm run typecheck` | Type-check JavaScript and JSDoc |
-| `npm run typecheck:contracts` | Type-check the built package API |
 | `npm run build` | Build JavaScript and declarations |
 
 ---

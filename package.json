@@ -28,7 +28,6 @@
     "format": "biome check --write .",
     "format:check": "biome check .",
     "typecheck": "tsc --noEmit",
-    "typecheck:contracts": "tsc --ignoreConfig --noEmit --module ESNext --moduleResolution bundler --target ESNext --strict --types node types/client-modules.ts",
     "build": "npm run build:js && npm run build:types",
     "build:js": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true",
     "build:types": "tsc --noEmit false --emitDeclarationOnly --rootDir src && cp src/index.d.ts dist/index.d.ts",

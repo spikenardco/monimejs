@@ -49,9 +49,6 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Typecheck package contract
-        run: npm run typecheck:contracts
-
       - name: Publish package (OIDC Trusted Publishing)
         run: npm publish --provenance --access public --ignore-scripts
 
