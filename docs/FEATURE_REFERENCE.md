@@ -289,10 +289,11 @@ esbuild src/index.ts \
 ### TypeScript Declaration Generation
 
 ```bash
-dts-bundle-generator -o dist/index.d.ts src/index.ts --no-banner
+tsc --project tsconfig.declarations.json
+cp src/index.d.ts dist/index.d.ts
 ```
 
-Generates bundled `.d.ts` file for type hints in consumers. All types are merged into a single file for distribution.
+TypeScript generates declarations for the JavaScript modules from their JSDoc comments. The checked-in `src/index.d.ts` remains the public type barrel, while the generated module declarations are internal dependencies of `dist/client.d.ts`.
 
 ---
 
@@ -349,7 +350,8 @@ Modules are instantiated once in `MonimeClient` constructor and reused for the c
 
 **Build Output:**
 - `dist/index.js` - Minified bundle | 20.1KB
-- `dist/index.d.ts` - Type declarations | Bundled single file
+- `dist/index.d.ts` - Public type declarations
+- `dist/*.d.ts` - Generated internal module declarations
 
 **Dev dependencies:**
 - `esbuild` - Fast bundler for production build

@@ -66,6 +66,8 @@ npm run build:types
 |--------|---------|
 | `npm run format` | Format code with Biome |
 | `npm run format:check` | Check formatting without changes |
+| `npm run typecheck` | Type-check JavaScript and JSDoc |
+| `npm run typecheck:contracts` | Type-check the built package API |
 | `npm run build:clean` | Clean build (recommended before commits) |
 
 ---
@@ -94,7 +96,8 @@ npm run format
 1. **File Structure**:
    - Core client logic: `client.js`
    - HTTP handling: `http-client.js`
-   - Type definitions: `index.js` (with JSDoc)
+    - Public type definitions: `src/index.d.ts`
+    - Internal type definitions: JavaScript modules with JSDoc
    - Error classes: `errors.js`
    - Feature modules: `payment.js`, `payout.js`, etc.
 
