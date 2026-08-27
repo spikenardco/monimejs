@@ -87,7 +87,7 @@ const { success, result } = await client.internalTransfer.update(transferId, {
 Cancel and remove a transfer. Can only delete if not yet processed.
 
 ```javascript
-const { success, success } = await client.internalTransfer.delete(transferId);
+const { success } = await client.internalTransfer.delete(transferId);
 ```
 
 

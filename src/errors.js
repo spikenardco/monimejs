@@ -1,7 +1,7 @@
 /**
  * @typedef {object} ValidationIssue
  * @property {string} message - Human-readable error message
- * @property {string} field - Path to the field that failed validation (e.g., "amount.value", "lineItems.0.name")
+ * @property {string} field - Client option that is invalid
  * @property {unknown} [value] - The invalid value that was provided
  */
 
@@ -93,8 +93,8 @@ class MonimeTimeoutError extends MonimeError {
 }
 
 /**
- * Error thrown when input validation fails.
- * Contains all validation issues found, allowing users to fix multiple errors at once.
+ * Error thrown when client execution options are invalid.
+ * Contains field details for the invalid option.
  */
 class MonimeValidationError extends MonimeError {
   /** @type {ValidationIssue[]} */

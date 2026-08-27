@@ -8,6 +8,8 @@ export type ClientOptions = {
   accessToken: string;
   /** Base URL for API requests (defaults to Monime production API) */
   baseUrl?: string;
+  /** Monime API release version (defaults to caph.2025-08-23) */
+  monimeVersion?: string;
   /** Request timeout in milliseconds */
   timeout?: number;
   /** Maximum number of retry attempts for failed requests */
@@ -16,8 +18,6 @@ export type ClientOptions = {
   retryDelay?: number;
   /** Multiplier for exponential backoff between retries */
   retryBackoff?: number;
-  /** Whether to validate input data before sending requests */
-  validateInputs?: boolean;
 };
 
 /**
@@ -1557,22 +1557,7 @@ export type GetProviderKycParams = {
   accountId: string;
 };
 
-export class MonimeClient {
-  constructor(options: ClientOptions);
-  readonly bank: BankModule;
-  readonly financialAccount: FinancialAccountModule;
-  readonly financialTransaction: FinancialTransactionModule;
-  readonly paymentCode: PaymentCodeModule;
-  readonly payment: PaymentModule;
-  readonly checkoutSession: CheckoutSessionModule;
-  readonly payout: PayoutModule;
-  readonly webhook: WebhookModule;
-  readonly internalTransfer: InternalTransferModule;
-  readonly momo: MomoModule;
-  readonly providerKyc: ProviderKycModule;
-  readonly receipt: ReceiptModule;
-  readonly ussdOtp: UssdOtpModule;
-}
+export { MonimeClient } from "./client.js";
 
 export class MonimeError extends Error {
   constructor(message: string);

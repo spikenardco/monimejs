@@ -41,58 +41,57 @@ class MonimeClient {
   /** @type {MonimeHttpClient} */
   #http_client;
   /** Module for retrieving bank information (financial institution providers) */
-  /** @type {BankModule} */
+  /** @readonly @type {BankModule} */
   bank;
   /** Module for managing financial accounts (wallets that hold and track money) */
-  /** @type {FinancialAccountModule} */
+  /** @readonly @type {FinancialAccountModule} */
   financialAccount;
   /** Module for managing financial transactions (fund movements affecting accounts) */
-  /** @type {FinancialTransactionModule} */
+  /** @readonly @type {FinancialTransactionModule} */
   financialTransaction;
   /** Module for managing payment codes (USSD payment links) */
-  /** @type {PaymentCodeModule} */
+  /** @readonly @type {PaymentCodeModule} */
   paymentCode;
   /** Module for managing payments (read-only, created via payment codes) */
-  /** @type {PaymentModule} */
+  /** @readonly @type {PaymentModule} */
   payment;
   /** Module for managing checkout sessions (hosted payment pages) */
-  /** @type {CheckoutSessionModule} */
+  /** @readonly @type {CheckoutSessionModule} */
   checkoutSession;
   /** Module for managing payouts (disbursements to external accounts) */
-  /** @type {PayoutModule} */
+  /** @readonly @type {PayoutModule} */
   payout;
   /** Module for managing webhooks (event notifications) */
-  /** @type {WebhookModule} */
+  /** @readonly @type {WebhookModule} */
   webhook;
   /** Module for managing internal transfers (between financial accounts) */
-  /** @type {InternalTransferModule} */
+  /** @readonly @type {InternalTransferModule} */
   internalTransfer;
   /** Module for retrieving mobile money provider information */
-  /** @type {MomoModule} */
+  /** @readonly @type {MomoModule} */
   momo;
   /** Module for retrieving KYC profiles from financial providers */
-  /** @type {ProviderKycModule} */
+  /** @readonly @type {ProviderKycModule} */
   providerKyc;
   /** Module for managing receipts (proof of customer entitlements) */
-  /** @type {ReceiptModule} */
+  /** @readonly @type {ReceiptModule} */
   receipt;
   /** Module for managing USSD OTP verification */
-  /** @type {UssdOtpModule} */
+  /** @readonly @type {UssdOtpModule} */
   ussdOtp;
   /**
    * Creates a new Monime client instance.
    *
    * @param {ClientOptions} options - Client configuration options
    * @param {object} options - Options object
-   * @param {string} options.spaceId - Your Monime space ID (must start with "spc-")
+   * @param {string} options.spaceId - Your Monime space ID
    * @param {string} options.accessToken - Your Monime API access token
    * @param {string} [options.baseUrl] - Optional custom API base URL (must use HTTPS)
+   * @param {string} [options.monimeVersion] - Optional Monime API release version (default: caph.2025-08-23)
    * @param {number} [options.timeout] - Request timeout in milliseconds (default: 30000)
    * @param {number} [options.retries] - Number of retry attempts (default: 2)
    * @param {number} [options.retryDelay] - Initial retry delay in milliseconds (default: 1000)
    * @param {number} [options.retryBackoff] - Retry backoff multiplier (default: 2)
-   * @param {boolean} [options.validateInputs] - Whether to validate inputs before requests (default: true)
-   *
    * @throws {MonimeValidationError} If options validation fails
    *
    * @example

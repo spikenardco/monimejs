@@ -37,3 +37,6 @@ jobs:
 
       - name: Build
         run: npm run build:clean
+
+      - name: Typecheck package contract
+        run: npm run typecheck:contracts

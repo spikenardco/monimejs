@@ -66,6 +66,8 @@ npm run build:types
 |--------|---------|
 | `npm run format` | Format code with Biome |
 | `npm run format:check` | Check formatting without changes |
+| `npm run typecheck` | Type-check JavaScript and JSDoc |
+| `npm run typecheck:contracts` | Type-check the built package API |
 | `npm run build:clean` | Clean build (recommended before commits) |
 
 ---
@@ -94,8 +96,8 @@ npm run format
 1. **File Structure**:
    - Core client logic: `client.js`
    - HTTP handling: `http-client.js`
-   - Type definitions: `index.js` (with JSDoc)
-   - Input schemas/validation: `schemas.js`, `validation.js`
+    - Public type definitions: `src/index.d.ts`
+    - Internal type definitions: JavaScript modules with JSDoc
    - Error classes: `errors.js`
    - Feature modules: `payment.js`, `payout.js`, etc.
 
@@ -110,10 +112,10 @@ npm run format
    - Use specific error types: `MonimeApiError`, `MonimeValidationError`, `MonimeTimeoutError`, `MonimeNetworkError`
    - Include descriptive messages and context
 
-4. **Validation**:
-   - Use Valibot schemas for input validation
-   - Schemas defined in `schemas.js`
-   - Validation functions in `validation.js`
+4. **Request validation**:
+   - Do not duplicate Monime request rules in the SDK
+   - Forward request values unchanged and let Monime return authoritative API errors
+   - Validate only SDK execution and security invariants, such as client options and webhook signatures
 
 5. **Documentation**:
    - Add JSDoc comments to public methods

@@ -1,10 +1,3 @@
-import {
-  CountryCodeSchema,
-  LimitSchema,
-  MomoProviderIdSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").Momo>} MomoListResponse */
 /** @typedef {import("./index.d.ts").ApiResponse<import("./index.d.ts").Momo>} MomoResponse */
@@ -53,25 +46,13 @@ class MomoModule {
    * @param {ListMomosParams} params - Filter and pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<MomoListResponse>} A paginated list of mobile money providers
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate) {
-      validate(CountryCodeSchema, params.country);
-      if (params.limit !== undefined) {
-        validate(LimitSchema, params.limit);
-      }
-    }
-    const query_params = {
-      country: params.country,
-      limit: params.limit,
-      after: params.after,
-    };
     return this.#http_client.request({
       method: "GET",
       path: "/momos",
-      params: query_params,
+      params,
       config,
     });
   }
@@ -80,13 +61,9 @@ class MomoModule {
    * @param {string} providerId - The mobile money provider ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<MomoResponse>} The mobile money provider
-   * @throws {MonimeValidationError} If providerId validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(providerId, config) {
-    if (this.#http_client.should_validate) {
-      validate(MomoProviderIdSchema, providerId);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/momos/${encodeURIComponent(providerId)}`,

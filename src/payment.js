@@ -1,10 +1,3 @@
-import {
-  IdSchema,
-  LimitSchema,
-  UpdatePaymentInputSchema,
-  validate,
-} from "./validation.js";
-
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").Payment>} PaymentListResponse */
 /** @typedef {import("./index.d.ts").ApiResponse<import("./index.d.ts").Payment>} PaymentResponse */
@@ -42,13 +35,9 @@ class PaymentModule {
    * @param {string} id - The payment ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<PaymentResponse>} The payment
-   * @throws {MonimeValidationError} If ID validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async get(id, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-    }
     return this.#http_client.request({
       method: "GET",
       path: `/payments/${encodeURIComponent(id)}`,
@@ -60,26 +49,13 @@ class PaymentModule {
    * @param {ListPaymentsParams} [params] - Optional filter and pagination parameters
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<PaymentListResponse>} A paginated list of payments
-   * @throws {MonimeValidationError} If params validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async list(params, config) {
-    if (this.#http_client.should_validate && params?.limit !== undefined) {
-      validate(LimitSchema, params.limit);
-    }
-    const query_params = params
-      ? {
-          orderNumber: params.orderNumber,
-          financialAccountId: params.financialAccountId,
-          financialTransactionReference: params.financialTransactionReference,
-          limit: params.limit,
-          after: params.after,
-        }
-      : undefined;
     return this.#http_client.request({
       method: "GET",
       path: "/payments",
-      params: query_params,
+      params,
       config,
     });
   }
@@ -89,14 +65,9 @@ class PaymentModule {
    * @param {UpdatePaymentInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<PaymentResponse>} The updated payment
-   * @throws {MonimeValidationError} If validation fails
    * @throws {MonimeApiError} If the API returns an error
    */
   async update(id, input, config) {
-    if (this.#http_client.should_validate) {
-      validate(IdSchema, id);
-      validate(UpdatePaymentInputSchema, input);
-    }
     return this.#http_client.request({
       method: "PATCH",
       path: `/payments/${encodeURIComponent(id)}`,
