@@ -87,6 +87,7 @@ class MonimeClient {
    * @param {string} options.spaceId - Your Monime space ID
    * @param {string} options.accessToken - Your Monime API access token
    * @param {string} [options.baseUrl] - Optional custom API base URL (must use HTTPS)
+   * @param {string} [options.monimeVersion] - Optional Monime API release version (default: caph.2025-08-23)
    * @param {number} [options.timeout] - Request timeout in milliseconds (default: 30000)
    * @param {number} [options.retries] - Number of retry attempts (default: 2)
    * @param {number} [options.retryDelay] - Initial retry delay in milliseconds (default: 1000)

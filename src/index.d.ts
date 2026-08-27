@@ -8,6 +8,8 @@ export type ClientOptions = {
   accessToken: string;
   /** Base URL for API requests (defaults to Monime production API) */
   baseUrl?: string;
+  /** Monime API release version (defaults to caph.2025-08-23) */
+  monimeVersion?: string;
   /** Request timeout in milliseconds */
   timeout?: number;
   /** Maximum number of retry attempts for failed requests */

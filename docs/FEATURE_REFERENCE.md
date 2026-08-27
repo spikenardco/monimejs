@@ -251,6 +251,7 @@ if (method === "POST") {
  * @property {string} spaceId - Required, non-empty string
  * @property {string} accessToken - Required
  * @property {string} [baseUrl] - Default: "https://api.monime.io"
+ * @property {string} [monimeVersion] - Default: "caph.2025-08-23"
  * @property {number} [timeout] - Default: 30000ms
  * @property {number} [retries] - Default: 2
  * @property {number} [retryDelay] - Default: 1000ms

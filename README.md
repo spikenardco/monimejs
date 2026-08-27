@@ -88,7 +88,7 @@ const client = new MonimeClient({
 Now all methods use the client's credentials automatically.
 
 - **Authentication**: Both values are required. Prefer environment variables.
-- **Headers**: SDK automatically sets `Authorization` and `Monime-Space-Id` for each call.
+- **Headers**: SDK automatically sets `Authorization`, `Monime-Space-Id`, and the pinned `Monime-Version` for each call. Set `monimeVersion` in the client options to override it.
 
 ### Payment Codes
 

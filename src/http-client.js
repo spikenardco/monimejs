@@ -25,6 +25,7 @@ import {
  */
 
 const API_VERSION = "v1";
+const DEFAULT_MONIME_VERSION = "caph.2025-08-23";
 
 /** API version prefix for all endpoints */
 /** @type {number} */
@@ -98,6 +99,18 @@ function validate_client_options(options) {
       retries,
     );
   }
+
+  const monime_version = client_options.monimeVersion;
+  if (
+    monime_version !== undefined &&
+    (typeof monime_version !== "string" || monime_version.length === 0)
+  ) {
+    throw_option_error(
+      "monimeVersion",
+      "monimeVersion must be a non-empty string",
+      monime_version,
+    );
+  }
 }
 
 /**
@@ -119,6 +132,8 @@ class MonimeHttpClient {
   #retry_delay;
   /** @type {number} */
   #retry_backoff;
+  /** @type {string} */
+  #monime_version;
   /** @param {ClientOptions} options */
   constructor(options) {
     validate_client_options(options);
@@ -129,6 +144,7 @@ class MonimeHttpClient {
     this.#retries = options.retries ?? DEFAULT_RETRIES;
     this.#retry_delay = options.retryDelay ?? DEFAULT_RETRY_DELAY;
     this.#retry_backoff = options.retryBackoff ?? DEFAULT_RETRY_BACKOFF;
+    this.#monime_version = options.monimeVersion ?? DEFAULT_MONIME_VERSION;
   }
 
   /**
@@ -197,6 +213,7 @@ class MonimeHttpClient {
     /** @type {Record<string, string>} */
     const headers = {
       "Monime-Space-Id": this.#space_id,
+      "Monime-Version": this.#monime_version,
       Authorization: `Bearer ${this.#access_token}`,
     };
     if (body !== undefined) {
