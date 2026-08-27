@@ -31,7 +31,7 @@
     "typecheck:contracts": "tsc --project tsconfig.types-contract.json",
     "build": "npm run build:js && npm run build:types",
     "build:js": "esbuild src/index.js --bundle --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true",
-    "build:types": "cp src/index.d.ts dist/index.d.ts",
+    "build:types": "tsc --project tsconfig.declarations.json && cp src/index.d.ts dist/index.d.ts",
     "build:clean": "rm -rf dist && npm run build",
     "prepublishOnly": "npm run build:clean",
     "release": "npm publish --provenance --access public"

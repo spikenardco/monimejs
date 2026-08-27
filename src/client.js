@@ -41,43 +41,43 @@ class MonimeClient {
   /** @type {MonimeHttpClient} */
   #http_client;
   /** Module for retrieving bank information (financial institution providers) */
-  /** @type {BankModule} */
+  /** @readonly @type {BankModule} */
   bank;
   /** Module for managing financial accounts (wallets that hold and track money) */
-  /** @type {FinancialAccountModule} */
+  /** @readonly @type {FinancialAccountModule} */
   financialAccount;
   /** Module for managing financial transactions (fund movements affecting accounts) */
-  /** @type {FinancialTransactionModule} */
+  /** @readonly @type {FinancialTransactionModule} */
   financialTransaction;
   /** Module for managing payment codes (USSD payment links) */
-  /** @type {PaymentCodeModule} */
+  /** @readonly @type {PaymentCodeModule} */
   paymentCode;
   /** Module for managing payments (read-only, created via payment codes) */
-  /** @type {PaymentModule} */
+  /** @readonly @type {PaymentModule} */
   payment;
   /** Module for managing checkout sessions (hosted payment pages) */
-  /** @type {CheckoutSessionModule} */
+  /** @readonly @type {CheckoutSessionModule} */
   checkoutSession;
   /** Module for managing payouts (disbursements to external accounts) */
-  /** @type {PayoutModule} */
+  /** @readonly @type {PayoutModule} */
   payout;
   /** Module for managing webhooks (event notifications) */
-  /** @type {WebhookModule} */
+  /** @readonly @type {WebhookModule} */
   webhook;
   /** Module for managing internal transfers (between financial accounts) */
-  /** @type {InternalTransferModule} */
+  /** @readonly @type {InternalTransferModule} */
   internalTransfer;
   /** Module for retrieving mobile money provider information */
-  /** @type {MomoModule} */
+  /** @readonly @type {MomoModule} */
   momo;
   /** Module for retrieving KYC profiles from financial providers */
-  /** @type {ProviderKycModule} */
+  /** @readonly @type {ProviderKycModule} */
   providerKyc;
   /** Module for managing receipts (proof of customer entitlements) */
-  /** @type {ReceiptModule} */
+  /** @readonly @type {ReceiptModule} */
   receipt;
   /** Module for managing USSD OTP verification */
-  /** @type {UssdOtpModule} */
+  /** @readonly @type {UssdOtpModule} */
   ussdOtp;
   /**
    * Creates a new Monime client instance.
