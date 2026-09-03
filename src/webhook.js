@@ -48,12 +48,7 @@ function parse_signature_header(signature_header) {
     const separator_index = part.indexOf("=");
     const key = part.slice(0, separator_index).trim();
     const value = part.slice(separator_index + 1).trim();
-    if (
-      separator_index < 1 ||
-      (key !== "t" && key !== "v1") ||
-      value.length === 0 ||
-      fields.has(key)
-    ) {
+    if (key !== "t" && key !== "v1") {
       throw_verification_error(
         "signature_header_invalid",
         "The Monime-Signature header is invalid.",
@@ -64,11 +59,15 @@ function parse_signature_header(signature_header) {
 
   const timestamp_text = fields.get("t");
   const signature_text = fields.get("v1");
+  if (timestamp_text === undefined || signature_text === undefined) {
+    throw_verification_error(
+      "signature_header_invalid",
+      "The Monime-Signature header is invalid.",
+    );
+  }
+
   if (
-    typeof timestamp_text !== "string" ||
     !/^(0|[1-9]\d*)$/.test(timestamp_text) ||
-    typeof signature_text !== "string" ||
-    signature_text.length % 4 !== 0 ||
     !/^[A-Za-z0-9+/]+={0,2}$/.test(signature_text)
   ) {
     throw_verification_error(
