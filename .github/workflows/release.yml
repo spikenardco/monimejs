@@ -54,4 +54,4 @@ jobs:
         with:
           generate_release_notes: true
           overwrite_files: true
-          tag: ${{ github.ref_name }}
+          tag_name: ${{ github.ref_name }}
