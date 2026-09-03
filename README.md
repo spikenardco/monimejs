@@ -1,6 +1,6 @@
 # monimejs
 
-Unofficial lightweight and easy js/ts SDK for interacting with monime's endpoints.
+`monimejs` is an unofficial, lightweight SDK that makes it easier to integrate Monime payments into your application without dealing with API requests directly.
 
 ![npm version](https://img.shields.io/npm/v/monimejs.svg)
 ![npm downloads](https://img.shields.io/npm/dm/monimejs.svg)
@@ -12,42 +12,27 @@ Unofficial lightweight and easy js/ts SDK for interacting with monime's endpoint
 
 ## Table of Contents
 
-- **[Features](#features)**
-- **[Installation](#installation)**
-- **[Environment Variables](#environment-variables)**
-- **[Quick Start](#quick-start)**
-- **[Error Handling](#error-handling)**
-- **[Timeout & Retry](#timeout--retry)**
-- **[AbortController](#abortcontroller)**
-- **[Idempotency](#idempotency)**
-- **[Contributing](#contributing)**
-- **[License](#license)**
+- [What it includes](#what-it-includes)
+- [Installation](#installation)
+- [Credentials](#credentials)
+- [Quick start](#quick-start)
+- [Error handling](#error-handling)
+- [Timeout & retry](#timeout--retry)
+- [Rate limits](#rate-limits)
+- [AbortController](#abortcontroller)
+- [Idempotency](#idempotency)
+- [Contributing](#contributing)
+- [License](#license)
 
 ---
 
-## Features
+## What it includes
 
-- [x] **Complete API coverage** for 12 resource modules:
-  - [x] Payment Codes
-  - [x] Payments
-  - [x] Financial Accounts
-  - [x] Financial Transactions
-  - [x] Checkout Sessions
-  - [x] Payouts
-  - [x] Webhooks
-  - [x] Internal Transfers
-  - [x] Receipts
-  - [x] Banks
-  - [x] Mobile Money Providers
-  - [x] USSD OTP
-- [x] **Client-based** auth: set credentials once per instance
-- [x] **Predictable** return shape fully typed: `{ success, result, messages }` and `{ success, messages }` for lists with pagination
-- [x] **Error handling** with typed API, client configuration, timeout, and network errors
-- [x] **Timeout configuration** with per-request overrides
-- [x] **Retry logic** with exponential backoff and Retry-After header support
-- [x] **AbortController support** for request cancellation
-- [x] **Forward-compatible requests** sent directly to Monime for authoritative validation
-- [x] **Idempotency** keys auto-generated for POST requests
+- One client for Monime's supported payment, account, payout, webhook, receipt, and provider APIs.
+- Types and JSDoc for the public SDK surface.
+- Configurable timeouts, retries, and request cancellation.
+- Automatic idempotency keys for POST requests, with support for supplying your own.
+- Typed errors for API, configuration, timeout, network, and webhook-verification failures.
 
 ---
 
@@ -59,9 +44,9 @@ npm install monimejs
 
 ---
 
-## Environment Variables
+## Credentials
 
-Recommended to store credentials in `.env`:
+Keep credentials outside source control. For example, you can store them in a `.env` file:
 
 ```bash
 MONIME_SPACE_ID=spc-your-space-id
@@ -69,11 +54,11 @@ MONIME_ACCESS_TOKEN=your-access-token
 MONIME_WEBHOOK_SECRET=your-webhook-signing-secret
 ```
 
-You can also pass credentials directly when creating the client.
+You can also provide them directly when creating the client.
 
 ---
 
-## Quick Start
+## Quick start
 
 ### Create a client
 
@@ -87,10 +72,11 @@ const client = new MonimeClient({
 });
 ```
 
-Now all methods use the client's credentials automatically.
+All client methods use these credentials automatically.
 
-- **Authentication**: Both values are required. Prefer environment variables.
-- **Headers**: SDK automatically sets `Authorization`, `Monime-Space-Id`, and the pinned `Monime-Version` for each call. Set `monimeVersion` in the client options to override it.
+`spaceId` and `accessToken` are required. The SDK sends `Authorization`,
+`Monime-Space-Id`, and a pinned `Monime-Version` header with every request. Set
+`monimeVersion` in the client options if you need a different API release.
 
 ### Verify webhooks
 
@@ -105,7 +91,7 @@ const event = client.webhook.verify(
 );
 ```
 
-### Payment Codes
+### Create a payment code
 
 ```javascript
 // Create a payment code
@@ -130,37 +116,19 @@ await client.paymentCode.update("pmc-xxx", { name: "Updated Name" });
 await client.paymentCode.delete("pmc-xxx");
 ```
 
-### Other Modules
-
-The SDK includes the following additional modules:
-
-- **`client.financialTransaction`** - View immutable transaction ledger (`get`, `list`)
-- **`client.internalTransfer`** - Transfer between financial accounts (`create`, `get`, `list`, `update`)
-- **`client.checkoutSession`** - Create and manage hosted payment pages (`create`, `get`, `list`)
-- **`client.payout`** - Disburse funds to external accounts (`create`, `get`, `list`, `update`, `delete`)
-- **`client.webhook`** - Manage webhook subscriptions and verify deliveries (`create`, `get`, `list`, `update`, `delete`, `verify`)
-- **`client.receipt`** - Manage digital receipts and entitlements (`get`, `redeem`)
-- **`client.bank`** - List and query bank providers by country (`list`, `get`)
-- **`client.momo`** - List and query mobile money providers (`list`, `get`)
-- **`client.ussdOtp`** - Create USSD-based phone verification sessions (`create`, `get`, `list`)
-
-For complete API details and usage examples, see [docs/examples](./docs/examples/README.md).
-For type definitions, the package exports JSDoc comments and TypeScript declarations in `dist/index.d.ts`.
+For the full SDK surface, see the type declarations in `dist/index.d.ts`. Monime's
+[API reference](https://docs.monime.io/apis) is the authoritative source for API
+contracts and business rules.
 
 ---
 
-## Error Handling
+## Error handling
 
-The SDK provides typed error classes for different failure scenarios:
+The SDK throws a typed error for each failure category.
 
 Request payloads, IDs, and query parameters are sent to Monime without local
 validation. `MonimeApiError` contains the authoritative Monime API error.
 `MonimeValidationError` is reserved for invalid client execution options.
-
-This differs from versions that used Valibot. The SDK no longer rejects invalid
-resource IDs, unsupported values, fractional amounts, or empty updates before a
-request. It also no longer strips unknown fields. Remove `validateInputs` from
-client configuration because that option no longer exists.
 
 ```javascript
 import {
@@ -197,7 +165,7 @@ try {
 
 ---
 
-## Timeout & Retry
+## Timeout & retry
 
 ### Configuration
 
@@ -229,12 +197,20 @@ await client.paymentCode.create(input, {
 });
 ```
 
-The SDK automatically retries on:
+The SDK retries:
 - Network errors (connection reset, DNS failure)
 - HTTP 429 (rate limited)
-- HTTP 500, 502, 503, 504 (server errors)
+- HTTP 500, 502, 503, and 504 (server errors)
 
-For more details, see [docs/FEATURE_REFERENCE.md](./docs/FEATURE_REFERENCE.md).
+For a `429` response, it uses the `Retry-After` header when Monime provides one.
+
+## Rate limits
+
+Monime applies limits by Space, access token, and endpoint. Avoid tight polling
+loops, especially for payment status. Use webhooks where they fit your flow, and
+let the SDK back off after a `429` response. See Monime's
+[rate-limit documentation](https://docs.monime.io/developer-resources/api-basics/rate-limiting)
+for the current limits.
 
 ---
 
@@ -267,15 +243,22 @@ try {
 
 ## Idempotency
 
-For POST endpoints, the SDK automatically adds an `Idempotency-Key` header. This helps prevent duplicate requests if you retry the same call. Keys are auto-generated using `crypto.randomUUID()`.
+For POST endpoints, the SDK automatically adds an `Idempotency-Key` header. This
+helps prevent duplicate requests when a call is retried. Keys are generated with
+`crypto.randomUUID()` when you do not provide one.
 
-You can provide a custom idempotency key:
+For a retry that may continue after a timeout, restart, or worker failure, store
+one key per logical operation and provide that same key on every retry:
 
 ```javascript
 await client.paymentCode.create(input, {
-  idempotencyKey: "my-custom-key",
+  idempotencyKey: "payment-code-order-1234",
 });
 ```
+
+Monime evaluates idempotency keys within a Space and rejects reuse with a
+different request. See the [Monime idempotency guide](https://docs.monime.io/developer-resources/api-basics/idempotency)
+for details.
 
 ---
 
@@ -287,4 +270,4 @@ For detailed contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ## License
 
-Apache 2.0 — see [LICENSE](./LICENSE).
+Apache 2.0. See [LICENSE](./LICENSE).

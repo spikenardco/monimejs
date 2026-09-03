@@ -8,10 +8,9 @@
 /**
  * Module for managing payments.
  *
- * Payments represent completed payment transactions from customers. This module
- * provides read-only access to view and query payment records. Payments are
- * automatically created when customers complete transactions via payment codes,
- * checkout sessions, or other payment channels.
+ * Payments represent customer payment transactions. Their status can be pending,
+ * processing, or completed. This module retrieves, lists, and partially updates
+ * payment records.
  *
  * Features:
  * - View payment details and status

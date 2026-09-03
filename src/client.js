@@ -49,10 +49,10 @@ class MonimeClient {
   /** Module for managing financial transactions (fund movements affecting accounts) */
   /** @readonly @type {FinancialTransactionModule} */
   financialTransaction;
-  /** Module for managing payment codes (USSD payment links) */
+  /** Module for managing payment codes used to collect mobile-money payments */
   /** @readonly @type {PaymentCodeModule} */
   paymentCode;
-  /** Module for managing payments (read-only, created via payment codes) */
+  /** Module for retrieving and partially updating customer payments */
   /** @readonly @type {PaymentModule} */
   payment;
   /** Module for managing checkout sessions (hosted payment pages) */

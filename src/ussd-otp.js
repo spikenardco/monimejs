@@ -9,22 +9,14 @@
 /**
  * Module for USSD OTP verification.
  *
- * USSD OTP provides passwordless phone number verification through USSD dial codes.
- * Instead of SMS codes, users dial a unique USSD string to prove phone ownership.
- * This method works on all mobile phones including feature phones without internet.
+ * USSD OTP provides phone-bound verification through USSD dial codes. Users dial
+ * the returned code and the session changes from pending to verified or expired.
  *
  * Verification flow:
  * 1. Create an OTP session with the phone number to verify
  * 2. Display the generated USSD code to the user
  * 3. User dials the USSD code (e.g., *715*12345#) from their phone
  * 4. Poll the session status until verified
- *
- * Benefits:
- * - Works without internet connectivity
- * - No SMS delivery delays or costs
- * - Supports all mobile networks
- * - Instant verification feedback
- * - Secure proof of phone ownership
  *
  * @see {@link https://docs.monime.io/apis/versions/caph-2025-08-23/ussd-otp/object} USSD OTP API Documentation
  */
@@ -53,7 +45,7 @@ class UssdOtpModule {
   }
   /**
    * Retrieves a USSD OTP by ID.
-   * @param {string} id - The USSD OTP ID (must start with "uop-")
+   * @param {string} id - The USSD OTP session ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<UssdOtpResponse>} The USSD OTP
    * @throws {MonimeApiError} If the API returns an error
@@ -82,7 +74,7 @@ class UssdOtpModule {
   }
   /**
    * Deletes a USSD OTP.
-   * @param {string} id - The USSD OTP ID (must start with "uop-")
+   * @param {string} id - The USSD OTP session ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
    * @throws {MonimeApiError} If the API returns an error

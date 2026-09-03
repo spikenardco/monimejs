@@ -55,7 +55,7 @@ class FinancialAccountModule {
   }
   /**
    * Retrieves a financial account by ID.
-   * @param {string} id - The financial account ID (must start with "fa-")
+   * @param {string} id - The financial account ID
    * @param {GetFinancialAccountParams} [params] - Optional parameters
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountResponse>} The financial account
@@ -86,7 +86,7 @@ class FinancialAccountModule {
   }
   /**
    * Updates a financial account.
-   * @param {string} id - The financial account ID (must start with "fa-")
+   * @param {string} id - The financial account ID
    * @param {UpdateFinancialAccountInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<FinancialAccountResponse>} The updated financial account

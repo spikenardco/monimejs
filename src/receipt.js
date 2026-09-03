@@ -54,7 +54,8 @@ class ReceiptModule {
     });
   }
   /**
-   * Redeems entitlements from a receipt.
+   * Redeems entitlements from a receipt. A bulk redemption is rejected when any
+   * requested entitlement is already exhausted.
    * @param {string} orderNumber - The order number of the receipt
    * @param {RedeemReceiptInput} input - Redemption configuration specifying what to redeem
    * @param {RequestConfig} [config] - Optional request configuration

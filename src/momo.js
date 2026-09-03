@@ -12,11 +12,6 @@
  * mobile money networks, populate provider selection interfaces, or validate
  * provider IDs before creating payment or payout transactions.
  *
- * Common providers include:
- * - QCell (m13)
- * - Africell (m17)
- * - Orange Money (m18)
- *
  * Provider information includes:
  * - Unique provider ID and display name
  * - Country of operation

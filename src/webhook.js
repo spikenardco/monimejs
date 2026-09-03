@@ -188,7 +188,6 @@ class WebhookModule {
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<WebhookResponse>} The created webhook
    * @throws {MonimeApiError} If the API returns an error
-   * @deprecated - Create webhook from the dashboard instead. this is not guaranteed to work.
    */
   async create(input, config) {
     return this.#http_client.request({
@@ -200,7 +199,7 @@ class WebhookModule {
   }
   /**
    * Retrieves a webhook by ID.
-   * @param {string} id - The webhook ID (must start with "whk-")
+   * @param {string} id - The webhook ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<WebhookResponse>} The webhook
    * @throws {MonimeApiError} If the API returns an error
@@ -229,7 +228,7 @@ class WebhookModule {
   }
   /**
    * Updates a webhook.
-   * @param {string} id - The webhook ID (must start with "whk-")
+   * @param {string} id - The webhook ID
    * @param {UpdateWebhookInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<WebhookResponse>} The updated webhook
@@ -244,8 +243,8 @@ class WebhookModule {
     });
   }
   /**
-   * Deletes a webhook.
-   * @param {string} id - The webhook ID (must start with "whk-")
+   * Deletes a webhook. This action is irreversible.
+   * @param {string} id - The webhook ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
    * @throws {MonimeApiError} If the API returns an error

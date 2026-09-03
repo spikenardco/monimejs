@@ -11,21 +11,14 @@
  * Module for managing internal transfers.
  *
  * Internal transfers move funds between financial accounts within the same
- * Monime workspace. Unlike payouts (which send funds externally), internal
- * transfers are instant, free, and ideal for fund management operations.
+ * Monime workspace. Unlike payouts, which send funds to an external provider,
+ * they are used for fund management between financial accounts.
  *
  * Use cases:
  * - Move funds from collection accounts to disbursement accounts
  * - Split revenue between multiple business units
  * - Reserve funds for specific purposes or escrow
  * - Consolidate balances across accounts
- *
- * Features:
- * - Instant settlement between accounts
- * - No transaction fees
- * - Same-currency transfers only
- * - Automatic balance updates
- * - Full audit trail via financial transactions
  *
  * @see {@link https://docs.monime.io/apis/versions/caph-2025-08-23/internal-transfer/object} Internal Transfers API Documentation
  */
@@ -54,7 +47,7 @@ class InternalTransferModule {
   }
   /**
    * Retrieves an internal transfer by ID.
-   * @param {string} id - The internal transfer ID (must start with "trn-")
+   * @param {string} id - The internal transfer ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferResponse>} The internal transfer
    * @throws {MonimeApiError} If the API returns an error
@@ -83,7 +76,7 @@ class InternalTransferModule {
   }
   /**
    * Updates an internal transfer.
-   * @param {string} id - The internal transfer ID (must start with "trn-")
+   * @param {string} id - The internal transfer ID
    * @param {UpdateInternalTransferInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<InternalTransferResponse>} The updated internal transfer
@@ -98,8 +91,8 @@ class InternalTransferModule {
     });
   }
   /**
-   * Deletes an internal transfer.
-   * @param {string} id - The internal transfer ID (must start with "trn-")
+   * Deletes an internal transfer when it is in a deletable state, such as pending.
+   * @param {string} id - The internal transfer ID
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
    * @throws {MonimeApiError} If the API returns an error

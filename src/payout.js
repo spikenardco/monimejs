@@ -14,14 +14,6 @@
  * via bank transfers, mobile money, or wallet transfers. Use payouts for vendor
  * payments, refunds, salary disbursements, and other outbound transfers.
  *
- * Features:
- * - Send funds to bank accounts (local and international)
- * - Disburse to mobile money wallets (Orange, Africell, QCell)
- * - Transfer to other Monime wallet addresses
- * - Track payout status (pending, completed, failed)
- * - Batch processing support
- * - Transaction reference tracking
- *
  * @see {@link https://docs.monime.io/apis/versions/caph-2025-08-23/payout/object} Payouts API Documentation
  */
 class PayoutModule {
@@ -77,7 +69,7 @@ class PayoutModule {
     });
   }
   /**
-   * Updates a payout.
+   * Updates a payout before it has been processed.
    * @param {string} id - The payout ID
    * @param {UpdatePayoutInput} input - Fields to update
    * @param {RequestConfig} [config] - Optional request configuration
@@ -93,7 +85,7 @@ class PayoutModule {
     });
   }
   /**
-   * Deletes a payout.
+   * Deletes a payout in a pre-processing state, such as pending or scheduled.
    * @param {string} id - The payout ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion

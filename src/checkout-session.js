@@ -15,8 +15,7 @@
  *
  * Features:
  * - Hosted payment pages with customizable branding
- * - Support for multiple line items (products, fees, discounts)
- * - Automatic receipt generation
+ * - Support for up to 16 custom line items
  * - Success and cancel URL redirects
  * - Session expiration controls
  * - Payment method selection (mobile money, bank transfer)
@@ -76,7 +75,7 @@ class CheckoutSessionModule {
     });
   }
   /**
-   * Deletes a checkout session.
+   * Deletes a checkout session that the customer has not initiated.
    * @param {string} id - The checkout session ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion

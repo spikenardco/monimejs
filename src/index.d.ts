@@ -4,7 +4,7 @@
 export type ClientOptions = {
   /** Your Monime workspace identifier */
   spaceId: string;
-  /** API access token for authentication */
+  /** Personal access token used for bearer authentication and environment selection */
   accessToken: string;
   /** Secret used to verify incoming webhook signatures */
   webhookSecret?: string;
@@ -155,12 +155,9 @@ export type PaymentCodeStatus =
   | "completed";
 
 /**
- * Mobile money provider identifiers.
- * - "m13": QCell
- * - "m17": Africell
- * - "m18": Orange
+ * Mobile money provider identifiers supported for payment codes.
  */
-export type PaymentCodeProvider = "m13" | "m17" | "m18";
+export type PaymentCodeProvider = "m17" | "m18";
 
 /**
  * Optional customer contact information associated with a payment code.
@@ -264,7 +261,7 @@ type CreatePaymentCodeBaseInput = {
   enable?: boolean;
   /** Payment amount to collect */
   amount?: Amount;
-  /** ISO 8601 duration until expiration (e.g., "P1D" for 1 day) */
+  /** How long the code remains valid (for example, "10m" or "1h30m") */
   duration?: string;
   /** Optional customer contact information */
   customer?: PaymentCodeCustomer;
@@ -469,14 +466,20 @@ export type LineItemType = "custom";
  * Individual product or service in a checkout session.
  */
 export type LineItem = {
-  /** Line item type */
-  type: LineItemType;
+  /** User-defined line-item type; defaults to "custom" */
+  type?: LineItemType;
   /** Product or service name */
   name: string;
   /** Unit price */
   price: Amount;
-  /** Number of units */
-  quantity: number;
+  /** Number of units (1–100,000; defaults to 1) */
+  quantity?: number;
+  /** Unique external reference within this checkout session */
+  reference?: string;
+  /** Optional item details */
+  description?: string;
+  /** Up to three image URLs for the item */
+  images?: string[];
 };
 
 /**
@@ -498,15 +501,28 @@ export type BrandingOptions = {
 /**
  * Configuration for available payment methods in checkout.
  */
+export type PaymentMethodOptions = {
+  /** Hide this payment method when true */
+  disable?: boolean;
+  /** Provider IDs to allow; takes precedence over disabledProviders */
+  enabledProviders?: string[];
+  /** Provider IDs to exclude unless also enabled */
+  disabledProviders?: string[];
+};
+
+/**
+ * Configuration of payment methods displayed during checkout.
+ * Provider lists apply to bank, mobile-money, and wallet methods.
+ */
 export type PaymentOptions = {
-  /** Enable card payments */
-  card?: boolean;
-  /** Enable bank transfers */
-  bank?: boolean;
-  /** Enable mobile money payments */
-  momo?: boolean;
-  /** Enable wallet payments */
-  wallet?: boolean;
+  /** Card payment settings */
+  card?: Pick<PaymentMethodOptions, "disable">;
+  /** Bank payment settings */
+  bank?: PaymentMethodOptions;
+  /** Mobile-money payment settings */
+  momo?: PaymentMethodOptions;
+  /** Wallet payment settings */
+  wallet?: PaymentMethodOptions;
 };
 
 /**

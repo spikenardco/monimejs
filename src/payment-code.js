@@ -16,7 +16,7 @@
  *
  * Features:
  * - Generate USSD codes like *715*12345#
- * - Restrict to specific mobile money providers (Orange, Africell, QCell)
+ * - Restrict to specific mobile money providers
  * - Restrict to a single authorized phone number
  * - Set expiration duration
  * - Track payment completion status
@@ -92,7 +92,7 @@ class PaymentCodeModule {
     });
   }
   /**
-   * Deletes a payment code.
+   * Deletes a payment code that has not been used.
    * @param {string} id - The payment code ID
    * @param {RequestConfig} [config] - Optional request configuration
    * @returns {Promise<ApiDeleteResponse>} Confirmation of deletion
