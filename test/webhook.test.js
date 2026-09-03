@@ -1,7 +1,11 @@
 import { describe, it } from "node:test";
 import assert from "node:assert/strict";
 import { createHmac } from "node:crypto";
-import { MonimeClient, MonimeWebhookVerificationError } from "../src/index.js";
+import {
+  MonimeClient,
+  MonimeWebhookVerificationError,
+  verifyWebhookSignature,
+} from "../src/index.js";
 
 const SECRET = "test-secret-key-at-least-32-chars!!";
 
@@ -109,6 +113,33 @@ describe("WebhookModule.verify", () => {
         name: "MonimeWebhookVerificationError",
         message: /not valid JSON/,
       },
+    );
+  });
+});
+
+// ── verifyWebhookSignature (standalone) ───────────────────────────────────
+
+describe("verifyWebhookSignature", () => {
+  const payload = JSON.stringify({ event: { name: "payout.completed" } });
+
+  it("verifies a valid signature without a client", () => {
+    const header = sign(payload, now());
+    const event = verifyWebhookSignature(payload, header, SECRET);
+    assert.equal(event.event.name, "payout.completed");
+  });
+
+  it("throws TypeError for short secret", () => {
+    assert.throws(
+      () => verifyWebhookSignature(payload, "t=0,v1=abc", "short"),
+      { name: "TypeError", message: /at least 32 characters/ },
+    );
+  });
+
+  it("rejects tampered body", () => {
+    const header = sign("original", now());
+    assert.throws(
+      () => verifyWebhookSignature("tampered", header, SECRET),
+      { name: "MonimeWebhookVerificationError" },
     );
   });
 });

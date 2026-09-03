@@ -1599,6 +1599,16 @@ export class MonimeWebhookVerificationError extends MonimeError {
   readonly reason: WebhookVerificationErrorReason;
 }
 
+/**
+ * Standalone webhook signature verification.
+ * Use this when you don't have a full MonimeClient instance.
+ */
+export function verifyWebhookSignature(
+  rawBody: string | Buffer,
+  signatureHeader: string,
+  webhookSecret: string,
+): WebhookEvent;
+
 export class MonimeNetworkError extends MonimeError {
   readonly cause: Error;
   get isRetryable(): boolean;

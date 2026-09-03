@@ -276,4 +276,72 @@ class WebhookModule {
   }
 }
 
-export { WebhookModule };
+/**
+ * Standalone webhook signature verification.
+ *
+ * Use this when you don't have (or don't want) a full MonimeClient instance.
+ * Verify incoming Monime webhook requests directly with just the secret.
+ *
+ * @param {string | Buffer} rawBody - Exact request body bytes
+ * @param {string} signatureHeader - Complete Monime-Signature header value
+ * @param {string} webhookSecret - Your webhook signing secret (from Monime dashboard)
+ * @returns {WebhookEvent} The authenticated, decoded webhook event
+ * @throws {TypeError} If arguments are invalid
+ * @throws {MonimeWebhookVerificationError} If verification fails
+ */
+function verifyWebhookSignature(rawBody, signatureHeader, webhookSecret) {
+  if (typeof webhookSecret !== "string" || webhookSecret.length < 32) {
+    throw new TypeError("webhookSecret must be a string of at least 32 characters");
+  }
+
+  if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
+    throw new TypeError("rawBody must be a string or Buffer");
+  }
+
+  const { timestamp_text, signature } =
+    parse_signature_header(signatureHeader);
+  const timestamp = Number(timestamp_text);
+  const current_timestamp = Math.floor(Date.now() / 1000);
+  if (
+    Math.abs(current_timestamp - timestamp) >
+    DEFAULT_SIGNATURE_TOLERANCE_SECONDS
+  ) {
+    throw_verification_error(
+      "timestamp_outside_tolerance",
+      "Webhook timestamp is outside the allowed tolerance",
+    );
+  }
+
+  const raw_body = Buffer.isBuffer(rawBody)
+    ? rawBody
+    : Buffer.from(rawBody, "utf8");
+  const signed_payload = Buffer.concat([
+    Buffer.from(`${timestamp_text}_`, "utf8"),
+    raw_body,
+  ]);
+  const expected_signature = createHmac("sha256", webhookSecret)
+    .update(signed_payload)
+    .digest();
+  if (!timingSafeEqual(expected_signature, signature)) {
+    throw_verification_error(
+      "signature_mismatch",
+      "Webhook signature does not match",
+    );
+  }
+
+  try {
+    const event = JSON.parse(raw_body.toString("utf8"));
+    if (event === null || typeof event !== "object" || Array.isArray(event)) {
+      throw new TypeError("Webhook event must be an object");
+    }
+    return /** @type {WebhookEvent} */ (event);
+  } catch (err) {
+    if (err instanceof MonimeWebhookVerificationError) throw err;
+    throw_verification_error(
+      "payload_invalid",
+      "Webhook payload is not valid JSON",
+    );
+  }
+}
+
+export { WebhookModule, verifyWebhookSignature };
