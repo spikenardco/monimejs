@@ -17,7 +17,7 @@
  * Features:
  * - Generate USSD codes like *715*12345#
  * - Restrict to specific mobile money providers
- * - Restrict to a single authorized phone number
+ * - Restrict use to a specific mobile-money account number
  * - Set expiration duration
  * - Track payment completion status
  *

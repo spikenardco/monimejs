@@ -9,7 +9,7 @@
  *
  * Looks up the KYC profile registered with a specific Mobile Money operator,
  * bank, or wallet provider for a given account. Useful for confirming the
- * legal holder name behind a phone number or bank account before initiating
+ * legal holder name behind a mobile-money account number or bank account before initiating
  * a payout or transfer.
  *
  * Returned data includes:
@@ -17,7 +17,7 @@
  * - The provider's id, type (`momo`, `bank`, `wallet`), and display name
  *
  * Common use cases:
- * - Verify the registered holder name before paying out to a phone number
+ * - Verify the registered holder name before paying out to a mobile-money account
  * - Pre-fill recipient details in a transfer UI
  * - Reconcile beneficiary identity against your own records
  *

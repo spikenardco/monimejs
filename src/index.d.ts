@@ -195,7 +195,7 @@ export type ProcessedPaymentData = {
   channelData: {
     /** Mobile money provider identifier */
     providerId: string;
-    /** Customer's account/phone number */
+    /** Customer account identifier, such as a mobile-money account number */
     accountId: string;
     /** Provider's transaction reference */
     reference: string;
@@ -233,8 +233,8 @@ export type PaymentCode = {
   reference?: string | null;
   /** Array of permitted mobile money providers */
   authorizedProviders?: PaymentCodeProvider[] | null;
-  /** MSISDN restriction limiting payment to a single phone number */
-  authorizedPhoneNumber: string;
+  /** Mobile-money account number authorized to use this code, when restricted */
+  authorizedPhoneNumber?: string | null;
   /** For recurrent codes - completion criteria with expectedPaymentCount and expectedPaymentTotal */
   recurrentPaymentTarget?: RecurrentPaymentTarget | null;
   /** ID of destination settlement account where funds will be credited */
@@ -269,7 +269,7 @@ type CreatePaymentCodeBaseInput = {
   reference?: string;
   /** Restrict to specific mobile money providers */
   authorizedProviders?: PaymentCodeProvider[];
-  /** Restrict to a single phone number (MSISDN format) */
+  /** Restrict this code to a mobile-money account number accepted by Monime */
   authorizedPhoneNumber?: string;
   /** Destination account for credited funds */
   financialAccountId?: string;
@@ -323,7 +323,7 @@ export type UpdatePaymentCodeInput = {
   reference?: string | null;
   /** Allowed mobile money providers */
   authorizedProviders?: PaymentCodeProvider[] | null;
-  /** Authorized phone number */
+  /** Updated mobile-money account number authorized to use this code */
   authorizedPhoneNumber?: string | null;
   /** Recurrent payment target */
   recurrentPaymentTarget?: RecurrentPaymentTarget | null;
@@ -665,7 +665,7 @@ export type PayoutDestinationMomo = {
   type: "momo";
   /** Mobile money provider identifier */
   providerId: string;
-  /** Recipient phone number (MSISDN format) */
+  /** Recipient mobile-money account number accepted by Monime */
   phoneNumber: string;
 };
 
@@ -756,7 +756,7 @@ export type CreatePayoutDestinationMomoInput = {
   type: "momo";
   /** Mobile money provider identifier */
   providerId: string;
-  /** Recipient's phone number */
+  /** Recipient mobile-money account number accepted by Monime */
   phoneNumber: string;
 };
 
@@ -1114,7 +1114,7 @@ export type UssdOtp = {
   status: UssdOtpStatus;
   /** USSD code users dial to verify */
   dialCode: string;
-  /** Associated phone number */
+  /** Authorized mobile number associated with this OTP; may be masked */
   authorizedPhoneNumber: string;
   /** User-facing confirmation message (max 255 chars) */
   verificationMessage?: string | null;
@@ -1130,7 +1130,7 @@ export type UssdOtp = {
  * Input for creating a new USSD OTP session.
  */
 export type CreateUssdOtpInput = {
-  /** Phone number to authorize (MSISDN format) */
+  /** Mobile number to authorize, in the format accepted by Monime */
   authorizedPhoneNumber: string;
   /** Optional custom message shown after verification (max 255 characters) */
   verificationMessage?: string;

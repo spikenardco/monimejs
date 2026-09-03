@@ -13,7 +13,7 @@
  * the returned code and the session changes from pending to verified or expired.
  *
  * Verification flow:
- * 1. Create an OTP session with the phone number to verify
+ * 1. Create an OTP session with the mobile number to verify
  * 2. Display the generated USSD code to the user
  * 3. User dials the USSD code (e.g., *715*12345#) from their phone
  * 4. Poll the session status until verified
@@ -30,7 +30,7 @@ class UssdOtpModule {
   }
   /**
    * Creates a new USSD OTP verification request.
-   * @param {CreateUssdOtpInput} input - OTP configuration including phone number
+   * @param {CreateUssdOtpInput} input - OTP configuration including the mobile number
    * @param {RequestConfig} [config] - Optional request configuration (timeout, idempotencyKey, signal)
    * @returns {Promise<UssdOtpResponse>} The created USSD OTP with dial code
    * @throws {MonimeApiError} If the API returns an error
