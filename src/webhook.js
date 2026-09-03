@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
 import { MonimeWebhookVerificationError } from "./errors.js";
+
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiDeleteResponse} ApiDeleteResponse */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").Webhook>} WebhookListResponse */
@@ -8,7 +9,6 @@ import { MonimeWebhookVerificationError } from "./errors.js";
 /** @typedef {import("./index.d.ts").ListWebhooksParams} ListWebhooksParams */
 /** @typedef {import("./index.d.ts").RequestConfig} RequestConfig */
 /** @typedef {import("./index.d.ts").UpdateWebhookInput} UpdateWebhookInput */
-/** @typedef {import("./index.d.ts").VerifyWebhookSignatureOptions} VerifyWebhookSignatureOptions */
 /** @typedef {import("./index.d.ts").WebhookEvent} WebhookEvent */
 /** @typedef {import("./index.d.ts").WebhookVerificationErrorReason} WebhookVerificationErrorReason */
 
@@ -117,10 +117,16 @@ function parse_signature_header(signature_header) {
 class WebhookModule {
   /** @type {MonimeHttpClient} */
   #http_client;
+  /** @type {string | undefined} */
+  #webhook_secret;
 
-  /** @param {MonimeHttpClient} http_client */
-  constructor(http_client) {
+  /**
+   * @param {MonimeHttpClient} http_client
+   * @param {string | undefined} webhook_secret
+   */
+  constructor(http_client, webhook_secret) {
     this.#http_client = http_client;
+    this.#webhook_secret = webhook_secret;
   }
   /**
    * Creates a new webhook.
@@ -207,45 +213,31 @@ class WebhookModule {
    *
    * @param {string | Buffer} rawBody - Exact request body
    * @param {string} signatureHeader - Complete Monime-Signature header value
-   * @param {string} secret - HS256 webhook secret
-   * @param {VerifyWebhookSignatureOptions} [options] - Verification options
    * @returns {WebhookEvent} The authenticated, decoded webhook event
    * @throws {TypeError} If caller-provided arguments are invalid
    * @throws {MonimeWebhookVerificationError} If verification or JSON decoding fails
    * @see {@link https://docs.monime.io/guide/webhook/hmac-verification}
    * @see {@link https://github.com/monimesl/Wp-Monime/blob/61f8ef20bc8ecbdc07f5bc2c5268d2b941452669/src/Monime/core/webhook.php#L49-L157}
    */
-  verifySignature(rawBody, signatureHeader, secret, options) {
+  verify(rawBody, signatureHeader) {
+    const secret = this.#webhook_secret;
+    if (secret === undefined) {
+      throw new TypeError(
+        "webhookSecret must be configured to verify webhook signatures",
+      );
+    }
     if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
       throw new TypeError("rawBody must be a string or Buffer");
-    }
-    if (
-      typeof secret !== "string" ||
-      secret.length < 32 ||
-      secret.length > 256
-    ) {
-      throw new TypeError("secret must contain 32 to 256 characters");
-    }
-    if (
-      options !== undefined &&
-      (options === null ||
-        typeof options !== "object" ||
-        Array.isArray(options))
-    ) {
-      throw new TypeError("options must be an object");
-    }
-
-    const tolerance_seconds =
-      options?.toleranceSeconds ?? DEFAULT_SIGNATURE_TOLERANCE_SECONDS;
-    if (!Number.isSafeInteger(tolerance_seconds) || tolerance_seconds < 0) {
-      throw new TypeError("toleranceSeconds must be a non-negative integer");
     }
 
     const { timestamp_text, signature } =
       parse_signature_header(signatureHeader);
     const timestamp = Number(timestamp_text);
     const current_timestamp = Math.floor(Date.now() / 1000);
-    if (Math.abs(current_timestamp - timestamp) > tolerance_seconds) {
+    if (
+      Math.abs(current_timestamp - timestamp) >
+      DEFAULT_SIGNATURE_TOLERANCE_SECONDS
+    ) {
       throw_verification_error(
         "timestamp_outside_tolerance",
         "Webhook timestamp is outside the allowed tolerance",

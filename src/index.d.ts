@@ -6,6 +6,8 @@ export type ClientOptions = {
   spaceId: string;
   /** API access token for authentication */
   accessToken: string;
+  /** Secret used to verify incoming webhook signatures */
+  webhookSecret?: string;
   /** Base URL for API requests (defaults to Monime production API) */
   baseUrl?: string;
   /** Monime API release version (defaults to caph.2025-08-23) */
