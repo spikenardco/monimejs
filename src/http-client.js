@@ -67,6 +67,20 @@ function validate_client_options(options) {
     }
   }
 
+  const webhook_secret = client_options.webhookSecret;
+  if (
+    webhook_secret !== undefined &&
+    (typeof webhook_secret !== "string" ||
+      webhook_secret.length < 32 ||
+      webhook_secret.length > 256)
+  ) {
+    throw_option_error(
+      "webhookSecret",
+      "webhookSecret must contain 32 to 256 characters",
+      webhook_secret,
+    );
+  }
+
   const base_url = client_options.baseUrl;
   if (base_url !== undefined) {
     if (typeof base_url !== "string" || !base_url.startsWith("https://")) {

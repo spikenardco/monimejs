@@ -1,3 +1,6 @@
+import { createHmac, timingSafeEqual } from "node:crypto";
+import { MonimeWebhookVerificationError } from "./errors.js";
+
 /** @typedef {import("./http-client.js").MonimeHttpClient} MonimeHttpClient */
 /** @typedef {import("./index.d.ts").ApiDeleteResponse} ApiDeleteResponse */
 /** @typedef {import("./index.d.ts").ApiListResponse<import("./index.d.ts").Webhook>} WebhookListResponse */
@@ -6,6 +9,144 @@
 /** @typedef {import("./index.d.ts").ListWebhooksParams} ListWebhooksParams */
 /** @typedef {import("./index.d.ts").RequestConfig} RequestConfig */
 /** @typedef {import("./index.d.ts").UpdateWebhookInput} UpdateWebhookInput */
+/** @typedef {import("./index.d.ts").WebhookEvent} WebhookEvent */
+/** @typedef {import("./index.d.ts").WebhookVerificationErrorReason} WebhookVerificationErrorReason */
+
+const DEFAULT_SIGNATURE_TOLERANCE_SECONDS = 300;
+
+/**
+ * @param {WebhookVerificationErrorReason} reason
+ * @param {string} message
+ * @returns {never}
+ */
+function throw_verification_error(reason, message) {
+  throw new MonimeWebhookVerificationError(message, reason);
+}
+
+/**
+ * @param {string} signature_header
+ * @returns {{ timestamp_text: string, signature: Buffer }}
+ */
+function parse_signature_header(signature_header) {
+  if (typeof signature_header !== "string") {
+    throw_verification_error(
+      "signature_header_invalid",
+      "The Monime-Signature header is invalid.",
+    );
+  }
+
+  const fields = new Map();
+  const parts = signature_header.split(",");
+  if (parts.length !== 2) {
+    throw_verification_error(
+      "signature_header_invalid",
+      "The Monime-Signature header is invalid.",
+    );
+  }
+
+  for (const part of parts) {
+    const separator_index = part.indexOf("=");
+    const key = part.slice(0, separator_index).trim();
+    const value = part.slice(separator_index + 1).trim();
+    if (
+      separator_index < 1 ||
+      (key !== "t" && key !== "v1") ||
+      value.length === 0 ||
+      fields.has(key)
+    ) {
+      throw_verification_error(
+        "signature_header_invalid",
+        "The Monime-Signature header is invalid.",
+      );
+    }
+    fields.set(key, value);
+  }
+
+  const timestamp_text = fields.get("t");
+  const signature_text = fields.get("v1");
+  if (
+    typeof timestamp_text !== "string" ||
+    !/^(0|[1-9]\d*)$/.test(timestamp_text) ||
+    typeof signature_text !== "string" ||
+    signature_text.length % 4 !== 0 ||
+    !/^[A-Za-z0-9+/]+={0,2}$/.test(signature_text)
+  ) {
+    throw_verification_error(
+      "signature_header_invalid",
+      "The Monime-Signature header is invalid.",
+    );
+  }
+
+  const timestamp = Number(timestamp_text);
+  const signature = Buffer.from(signature_text, "base64");
+  if (
+    !Number.isSafeInteger(timestamp) ||
+    signature.length !== 32 ||
+    signature.toString("base64") !== signature_text
+  ) {
+    throw_verification_error(
+      "signature_header_invalid",
+      "The Monime-Signature header is invalid.",
+    );
+  }
+
+  return { timestamp_text, signature };
+}
+
+/**
+ * @param {string | Buffer} rawBody
+ * @param {string} signatureHeader
+ * @param {string} webhookSecret
+ * @returns {WebhookEvent}
+ */
+function verify_webhook_signature(rawBody, signatureHeader, webhookSecret) {
+  if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
+    throw new TypeError("rawBody must be a string or Buffer.");
+  }
+
+  const { timestamp_text, signature } = parse_signature_header(signatureHeader);
+  const timestamp = Number(timestamp_text);
+  const current_timestamp = Math.floor(Date.now() / 1000);
+  if (
+    Math.abs(current_timestamp - timestamp) >
+    DEFAULT_SIGNATURE_TOLERANCE_SECONDS
+  ) {
+    throw_verification_error(
+      "timestamp_outside_tolerance",
+      "Webhook timestamp is outside the allowed range.",
+    );
+  }
+
+  const raw_body = Buffer.isBuffer(rawBody)
+    ? rawBody
+    : Buffer.from(rawBody, "utf8");
+  const signed_payload = Buffer.concat([
+    Buffer.from(`${timestamp_text}_`, "utf8"),
+    raw_body,
+  ]);
+  const expected_signature = createHmac("sha256", webhookSecret)
+    .update(signed_payload)
+    .digest();
+  if (!timingSafeEqual(expected_signature, signature)) {
+    throw_verification_error(
+      "signature_mismatch",
+      "Webhook signature does not match.",
+    );
+  }
+
+  try {
+    const event = JSON.parse(raw_body.toString("utf8"));
+    if (event === null || typeof event !== "object" || Array.isArray(event)) {
+      throw new TypeError("Webhook event must be an object.");
+    }
+    return /** @type {WebhookEvent} */ (event);
+  } catch {
+    throw_verification_error(
+      "payload_invalid",
+      "Webhook body is not valid JSON.",
+    );
+  }
+}
 
 /**
  * Module for managing webhooks.
@@ -21,7 +162,7 @@
  * - internal_transfer.completed
  *
  * Security features:
- * - Request signatures for verification (HS256 HMAC or ES256 ECDSA)
+ * - HS256 request signature verification
  * - Automatic retry with exponential backoff
  * - Configurable timeout settings
  * - Enable/disable endpoints without deletion
@@ -31,10 +172,16 @@
 class WebhookModule {
   /** @type {MonimeHttpClient} */
   #http_client;
+  /** @type {string | undefined} */
+  #webhook_secret;
 
-  /** @param {MonimeHttpClient} http_client */
-  constructor(http_client) {
+  /**
+   * @param {MonimeHttpClient} http_client
+   * @param {string | undefined} webhook_secret
+   */
+  constructor(http_client, webhook_secret) {
     this.#http_client = http_client;
+    this.#webhook_secret = webhook_secret;
   }
   /**
    * Creates a new webhook.
@@ -111,53 +258,53 @@ class WebhookModule {
       config,
     });
   }
+
   /**
    * Verifies the signature of an incoming webhook request.
    *
-   * @remarks
-   * **NOT IMPLEMENTED.** The Monime documentation has not yet published the
-   * concrete signature scheme used for webhook requests. The HMAC verification
-   * guide ({@link https://docs.monime.io/guide/webhook/hmac-verification})
-   * is still a placeholder, and the OpenAPI spec for webhooks only describes
-   * the configuration of the verification *method* (`HS256` shared secret or
-   * `ES256` public key) — it does not specify:
+   * The raw body must be the exact bytes received from Monime. Parsing and
+   * re-serializing JSON before verification changes the signed payload.
+   * This method supports HS256 signatures only. Monime has not published the
+   * delivery details needed to verify ES256 signatures.
    *
-   *   - the request header name(s) carrying the signature and timestamp
-   *   - the canonical signed-payload format (e.g. `${timestamp}.${rawBody}`)
-   *   - the digest encoding (hex vs base64)
-   *   - the recommended replay-tolerance window
-   *
-   * Until Monime publishes these details, calling this method throws so that
-   * integrators do not silently accept unverified payloads. Track the
-   * upstream docs and replace this stub with the real HS256/ES256
-   * implementation when the spec is available.
-   *
-   * Intended signature once implemented (modeled after Stripe's
-   * `Webhook.constructEvent`):
-   *
-   * ```ts
-   * verifySignature(rawBody: string | Buffer, headers: Record<string, string>,
-   *                 secretOrPublicKey: string,
-   *                 options?: { toleranceSeconds?: number }): WebhookEvent
-   * ```
-   *
-   * @param {string | Buffer} _rawBody - Raw request body exactly as received (do not re-serialize the parsed JSON)
-   * @param {Record<string, string>} _headers - Request headers (lower-cased keys recommended)
-   * @param {string} _secretOrPublicKey - HMAC shared secret (HS256) or PEM-encoded P-256 public key (ES256)
-   * @param {{ toleranceSeconds?: number }} [_options] - Optional verification options
-   * @returns {never}
-   * @throws {Error} Always, until the Monime signing spec is published.
+   * @param {string | Buffer} rawBody - Exact request body
+   * @param {string} signatureHeader - Complete Monime-Signature header value
+   * @returns {WebhookEvent} The authenticated, decoded webhook event
+   * @throws {TypeError} If caller-provided arguments are invalid
+   * @throws {MonimeWebhookVerificationError} If verification or JSON decoding fails
    * @see {@link https://docs.monime.io/guide/webhook/hmac-verification}
    */
-  verifySignature(_rawBody, _headers, _secretOrPublicKey, _options) {
-    throw new Error(
-      "MonimeClient.webhook.verifySignature is not implemented yet: " +
-        "Monime has not published the webhook signature header names or " +
-        "canonical signed-payload format. Track " +
-        "https://docs.monime.io/guide/webhook/hmac-verification and file an " +
-        "issue against monimejs once the spec is available.",
-    );
+  verify(rawBody, signatureHeader) {
+    const secret = this.#webhook_secret;
+    if (secret === undefined) {
+      throw new TypeError(
+        "Configure webhookSecret before verifying webhook signatures.",
+      );
+    }
+    return verify_webhook_signature(rawBody, signatureHeader, secret);
   }
 }
 
-export { WebhookModule };
+/**
+ * Standalone webhook signature verification.
+ *
+ * Use this when you don't have (or don't want) a full MonimeClient instance.
+ * Verify incoming Monime webhook requests directly with just the secret.
+ *
+ * @param {string | Buffer} rawBody - Exact request body bytes
+ * @param {string} signatureHeader - Complete Monime-Signature header value
+ * @param {string} webhookSecret - Your webhook signing secret (from Monime dashboard)
+ * @returns {WebhookEvent} The authenticated, decoded webhook event
+ * @throws {TypeError} If arguments are invalid
+ * @throws {MonimeWebhookVerificationError} If verification fails
+ */
+function verifyWebhookSignature(rawBody, signatureHeader, webhookSecret) {
+  if (typeof webhookSecret !== "string" || webhookSecret.length < 32) {
+    throw new TypeError(
+      "webhookSecret must be a string at least 32 characters long.",
+    );
+  }
+  return verify_webhook_signature(rawBody, signatureHeader, webhookSecret);
+}
+
+export { verifyWebhookSignature, WebhookModule };

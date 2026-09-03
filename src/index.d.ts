@@ -6,6 +6,8 @@ export type ClientOptions = {
   spaceId: string;
   /** API access token for authentication */
   accessToken: string;
+  /** Secret used to verify incoming webhook signatures */
+  webhookSecret?: string;
   /** Base URL for API requests (defaults to Monime production API) */
   baseUrl?: string;
   /** Monime API release version (defaults to caph.2025-08-23) */
@@ -959,6 +961,19 @@ export type WebhookEvent<TData = unknown> = {
   data: TData;
 };
 
+/** Options for webhook signature verification. */
+export type VerifyWebhookSignatureOptions = {
+  /** Maximum allowed age or clock skew in seconds. Defaults to 300. */
+  toleranceSeconds?: number;
+};
+
+/** Stable reason codes for webhook verification failures. */
+export type WebhookVerificationErrorReason =
+  | "signature_header_invalid"
+  | "timestamp_outside_tolerance"
+  | "signature_mismatch"
+  | "payload_invalid";
+
 /**
  * Internal transfer processing states.
  * - "pending": Transfer created, awaiting processing
@@ -1579,6 +1594,20 @@ export class MonimeTimeoutError extends MonimeError {
 export class MonimeValidationError extends MonimeError {
   readonly issues: unknown[];
 }
+
+export class MonimeWebhookVerificationError extends MonimeError {
+  readonly reason: WebhookVerificationErrorReason;
+}
+
+/**
+ * Standalone webhook signature verification.
+ * Use this when you don't have a full MonimeClient instance.
+ */
+export function verifyWebhookSignature(
+  rawBody: string | Buffer,
+  signatureHeader: string,
+  webhookSecret: string,
+): WebhookEvent;
 
 export class MonimeNetworkError extends MonimeError {
   readonly cause: Error;

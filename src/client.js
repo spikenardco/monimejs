@@ -86,6 +86,7 @@ class MonimeClient {
    * @param {object} options - Options object
    * @param {string} options.spaceId - Your Monime space ID
    * @param {string} options.accessToken - Your Monime API access token
+   * @param {string} [options.webhookSecret] - Optional secret for verifying incoming webhook signatures
    * @param {string} [options.baseUrl] - Optional custom API base URL (must use HTTPS)
    * @param {string} [options.monimeVersion] - Optional Monime API release version (default: caph.2025-08-23)
    * @param {number} [options.timeout] - Request timeout in milliseconds (default: 30000)
@@ -122,7 +123,7 @@ class MonimeClient {
     this.payment = new PaymentModule(this.#http_client);
     this.checkoutSession = new CheckoutSessionModule(this.#http_client);
     this.payout = new PayoutModule(this.#http_client);
-    this.webhook = new WebhookModule(this.#http_client);
+    this.webhook = new WebhookModule(this.#http_client, options.webhookSecret);
     this.internalTransfer = new InternalTransferModule(this.#http_client);
     this.momo = new MomoModule(this.#http_client);
     this.providerKyc = new ProviderKycModule(this.#http_client);

@@ -22,6 +22,12 @@ MONIME_SPACE_ID=spc-your-space-id
 MONIME_ACCESS_TOKEN=your-access-token
 ```
 
+Webhook signature verification also uses a separate HMAC secret:
+
+```bash
+MONIME_WEBHOOK_KEY=your-webhook-hmac-secret
+```
+
 ## Examples
 
 | File | Description |
