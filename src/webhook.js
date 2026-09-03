@@ -31,7 +31,7 @@ function parse_signature_header(signature_header) {
   if (typeof signature_header !== "string") {
     throw_verification_error(
       "signature_header_invalid",
-      "Invalid Monime-Signature header",
+      "The Monime-Signature header is invalid.",
     );
   }
 
@@ -40,7 +40,7 @@ function parse_signature_header(signature_header) {
   if (parts.length !== 2) {
     throw_verification_error(
       "signature_header_invalid",
-      "Invalid Monime-Signature header",
+      "The Monime-Signature header is invalid.",
     );
   }
 
@@ -56,7 +56,7 @@ function parse_signature_header(signature_header) {
     ) {
       throw_verification_error(
         "signature_header_invalid",
-        "Invalid Monime-Signature header",
+        "The Monime-Signature header is invalid.",
       );
     }
     fields.set(key, value);
@@ -73,7 +73,7 @@ function parse_signature_header(signature_header) {
   ) {
     throw_verification_error(
       "signature_header_invalid",
-      "Invalid Monime-Signature header",
+      "The Monime-Signature header is invalid.",
     );
   }
 
@@ -86,11 +86,66 @@ function parse_signature_header(signature_header) {
   ) {
     throw_verification_error(
       "signature_header_invalid",
-      "Invalid Monime-Signature header",
+      "The Monime-Signature header is invalid.",
     );
   }
 
   return { timestamp_text, signature };
+}
+
+/**
+ * @param {string | Buffer} rawBody
+ * @param {string} signatureHeader
+ * @param {string} webhookSecret
+ * @returns {WebhookEvent}
+ */
+function verify_webhook_signature(rawBody, signatureHeader, webhookSecret) {
+  if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
+    throw new TypeError("rawBody must be a string or Buffer.");
+  }
+
+  const { timestamp_text, signature } = parse_signature_header(signatureHeader);
+  const timestamp = Number(timestamp_text);
+  const current_timestamp = Math.floor(Date.now() / 1000);
+  if (
+    Math.abs(current_timestamp - timestamp) >
+    DEFAULT_SIGNATURE_TOLERANCE_SECONDS
+  ) {
+    throw_verification_error(
+      "timestamp_outside_tolerance",
+      "Webhook timestamp is outside the allowed range.",
+    );
+  }
+
+  const raw_body = Buffer.isBuffer(rawBody)
+    ? rawBody
+    : Buffer.from(rawBody, "utf8");
+  const signed_payload = Buffer.concat([
+    Buffer.from(`${timestamp_text}_`, "utf8"),
+    raw_body,
+  ]);
+  const expected_signature = createHmac("sha256", webhookSecret)
+    .update(signed_payload)
+    .digest();
+  if (!timingSafeEqual(expected_signature, signature)) {
+    throw_verification_error(
+      "signature_mismatch",
+      "Webhook signature does not match.",
+    );
+  }
+
+  try {
+    const event = JSON.parse(raw_body.toString("utf8"));
+    if (event === null || typeof event !== "object" || Array.isArray(event)) {
+      throw new TypeError("Webhook event must be an object.");
+    }
+    return /** @type {WebhookEvent} */ (event);
+  } catch {
+    throw_verification_error(
+      "payload_invalid",
+      "Webhook body is not valid JSON.",
+    );
+  }
 }
 
 /**
@@ -223,56 +278,10 @@ class WebhookModule {
     const secret = this.#webhook_secret;
     if (secret === undefined) {
       throw new TypeError(
-        "webhookSecret must be configured to verify webhook signatures",
+        "Configure webhookSecret before verifying webhook signatures.",
       );
     }
-    if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
-      throw new TypeError("rawBody must be a string or Buffer");
-    }
-
-    const { timestamp_text, signature } =
-      parse_signature_header(signatureHeader);
-    const timestamp = Number(timestamp_text);
-    const current_timestamp = Math.floor(Date.now() / 1000);
-    if (
-      Math.abs(current_timestamp - timestamp) >
-      DEFAULT_SIGNATURE_TOLERANCE_SECONDS
-    ) {
-      throw_verification_error(
-        "timestamp_outside_tolerance",
-        "Webhook timestamp is outside the allowed tolerance",
-      );
-    }
-
-    const raw_body = Buffer.isBuffer(rawBody)
-      ? rawBody
-      : Buffer.from(rawBody, "utf8");
-    const signed_payload = Buffer.concat([
-      Buffer.from(`${timestamp_text}_`, "utf8"),
-      raw_body,
-    ]);
-    const expected_signature = createHmac("sha256", secret)
-      .update(signed_payload)
-      .digest();
-    if (!timingSafeEqual(expected_signature, signature)) {
-      throw_verification_error(
-        "signature_mismatch",
-        "Webhook signature does not match",
-      );
-    }
-
-    try {
-      const event = JSON.parse(raw_body.toString("utf8"));
-      if (event === null || typeof event !== "object" || Array.isArray(event)) {
-        throw new TypeError("Webhook event must be an object");
-      }
-      return /** @type {WebhookEvent} */ (event);
-    } catch {
-      throw_verification_error(
-        "payload_invalid",
-        "Webhook payload is not valid JSON",
-      );
-    }
+    return verify_webhook_signature(rawBody, signatureHeader, secret);
   }
 }
 
@@ -292,57 +301,10 @@ class WebhookModule {
 function verifyWebhookSignature(rawBody, signatureHeader, webhookSecret) {
   if (typeof webhookSecret !== "string" || webhookSecret.length < 32) {
     throw new TypeError(
-      "webhookSecret must be a string of at least 32 characters",
+      "webhookSecret must be a string at least 32 characters long.",
     );
   }
-
-  if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
-    throw new TypeError("rawBody must be a string or Buffer");
-  }
-
-  const { timestamp_text, signature } = parse_signature_header(signatureHeader);
-  const timestamp = Number(timestamp_text);
-  const current_timestamp = Math.floor(Date.now() / 1000);
-  if (
-    Math.abs(current_timestamp - timestamp) >
-    DEFAULT_SIGNATURE_TOLERANCE_SECONDS
-  ) {
-    throw_verification_error(
-      "timestamp_outside_tolerance",
-      "Webhook timestamp is outside the allowed tolerance",
-    );
-  }
-
-  const raw_body = Buffer.isBuffer(rawBody)
-    ? rawBody
-    : Buffer.from(rawBody, "utf8");
-  const signed_payload = Buffer.concat([
-    Buffer.from(`${timestamp_text}_`, "utf8"),
-    raw_body,
-  ]);
-  const expected_signature = createHmac("sha256", webhookSecret)
-    .update(signed_payload)
-    .digest();
-  if (!timingSafeEqual(expected_signature, signature)) {
-    throw_verification_error(
-      "signature_mismatch",
-      "Webhook signature does not match",
-    );
-  }
-
-  try {
-    const event = JSON.parse(raw_body.toString("utf8"));
-    if (event === null || typeof event !== "object" || Array.isArray(event)) {
-      throw new TypeError("Webhook event must be an object");
-    }
-    return /** @type {WebhookEvent} */ (event);
-  } catch (err) {
-    if (err instanceof MonimeWebhookVerificationError) throw err;
-    throw_verification_error(
-      "payload_invalid",
-      "Webhook payload is not valid JSON",
-    );
-  }
+  return verify_webhook_signature(rawBody, signatureHeader, webhookSecret);
 }
 
 export { verifyWebhookSignature, WebhookModule };
