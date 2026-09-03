@@ -16,7 +16,7 @@ function sign(body) {
 }
 
 describe("webhook verification", () => {
-  it("verifies a valid webhook with a client", () => {
+  it("accepts a signed webhook", () => {
     const client = new MonimeClient({
       spaceId: "sp_test",
       accessToken: "tok_test",
@@ -27,11 +27,11 @@ describe("webhook verification", () => {
     assert.equal(event.event.name, "payment.completed");
   });
 
-  it("rejects a tampered webhook body", () => {
+  it("rejects a modified body", () => {
     assert.throws(() => verifyWebhookSignature("tampered", sign(BODY), SECRET));
   });
 
-  it("verifies a valid webhook with the standalone helper", () => {
+  it("works without a client", () => {
     const event = verifyWebhookSignature(BODY, sign(BODY), SECRET);
     assert.equal(event.event.name, "payment.completed");
   });
