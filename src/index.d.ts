@@ -961,12 +961,6 @@ export type WebhookEvent<TData = unknown> = {
   data: TData;
 };
 
-/** Options for webhook signature verification. */
-export type VerifyWebhookSignatureOptions = {
-  /** Maximum allowed age or clock skew in seconds. Defaults to 300. */
-  toleranceSeconds?: number;
-};
-
 /** Stable reason codes for webhook verification failures. */
 export type WebhookVerificationErrorReason =
   | "signature_header_invalid"

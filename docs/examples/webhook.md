@@ -8,7 +8,7 @@ Configure the webhook with HS256 and store its secret separately from your API a
 MONIME_WEBHOOK_KEY=your-webhook-hmac-secret
 ```
 
-Pass `verifySignature` the complete `Monime-Signature` header and the body bytes exactly as they arrived. Do not call `request.json()` first or parse and re-serialize the body.
+Configure `webhookSecret` on the client, then pass `verify` the complete `Monime-Signature` header and the body bytes exactly as they arrived. Do not call `request.json()` first or parse and re-serialize the body.
 
 This example uses the standard Web `Request` API available in Node.js 20 and many server frameworks:
 
@@ -21,13 +21,13 @@ import {
 const client = new MonimeClient({
   spaceId: process.env.MONIME_SPACE_ID,
   accessToken: process.env.MONIME_ACCESS_TOKEN,
+  webhookSecret: process.env.MONIME_WEBHOOK_KEY,
 });
 
 export async function handleMonimeWebhook(request) {
   const signature_header = request.headers.get("Monime-Signature");
-  const webhook_secret = process.env.MONIME_WEBHOOK_KEY;
 
-  if (!signature_header || !webhook_secret) {
+  if (!signature_header) {
     return new Response("Webhook verification is not configured", {
       status: 400,
     });
@@ -36,11 +36,7 @@ export async function handleMonimeWebhook(request) {
   const raw_body = Buffer.from(await request.arrayBuffer());
 
   try {
-    const event = client.webhook.verifySignature(
-      raw_body,
-      signature_header,
-      webhook_secret,
-    );
+    const event = client.webhook.verify(raw_body, signature_header);
 
     // Process the authenticated event here.
     console.log(event.event.name, event.object.id);
@@ -54,7 +50,7 @@ export async function handleMonimeWebhook(request) {
 }
 ```
 
-The default timestamp tolerance is 300 seconds. You can override it with `{ toleranceSeconds: number }`, but increasing the window also increases the time in which a captured request can be replayed.
+The verifier rejects timestamps more than 300 seconds from the server clock.
 
 The verifier supports HS256 only. It expects `Monime-Signature: t=<Unix seconds>,v1=<Base64 HMAC-SHA-256>` and signs `<timestamp>_<raw body>`. Monime's [public HMAC verification guide](https://docs.monime.io/guide/webhook/hmac-verification.md) is still a placeholder and does not provide an official test vector. The SDK does not verify ES256 because Monime has not published its delivery signature format.
 
