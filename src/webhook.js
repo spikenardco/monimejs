@@ -291,15 +291,16 @@ class WebhookModule {
  */
 function verifyWebhookSignature(rawBody, signatureHeader, webhookSecret) {
   if (typeof webhookSecret !== "string" || webhookSecret.length < 32) {
-    throw new TypeError("webhookSecret must be a string of at least 32 characters");
+    throw new TypeError(
+      "webhookSecret must be a string of at least 32 characters",
+    );
   }
 
   if (typeof rawBody !== "string" && !Buffer.isBuffer(rawBody)) {
     throw new TypeError("rawBody must be a string or Buffer");
   }
 
-  const { timestamp_text, signature } =
-    parse_signature_header(signatureHeader);
+  const { timestamp_text, signature } = parse_signature_header(signatureHeader);
   const timestamp = Number(timestamp_text);
   const current_timestamp = Math.floor(Date.now() / 1000);
   if (
@@ -344,4 +345,4 @@ function verifyWebhookSignature(rawBody, signatureHeader, webhookSecret) {
   }
 }
 
-export { WebhookModule, verifyWebhookSignature };
+export { verifyWebhookSignature, WebhookModule };

@@ -1,5 +1,4 @@
 export { MonimeClient } from "./client.js";
-export { verifyWebhookSignature } from "./webhook.js";
 export {
   MonimeApiError,
   MonimeError,
@@ -8,3 +7,4 @@ export {
   MonimeValidationError,
   MonimeWebhookVerificationError,
 } from "./errors.js";
+export { verifyWebhookSignature } from "./webhook.js";
