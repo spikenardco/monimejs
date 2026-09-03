@@ -26,6 +26,7 @@
   "scripts": {
     "format": "biome check --write .",
     "format:check": "biome check .",
+    "test": "node --test",
     "typecheck": "tsc --noEmit",
     "build": "npm run build:js && npm run build:types",
     "build:js": "esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true",
