@@ -1,10 +1,8 @@
-# Implementation Reference
+# Implementation reference
 
-Technical details for contributors and those curious about how features are implemented.
+This reference describes the SDK internals for contributors.
 
----
-
-## Architecture Overview
+## Architecture
 
 ```
 MonimeClient
@@ -18,129 +16,89 @@ MonimeClient
 ├── webhook: WebhookModule
 ├── internalTransfer: InternalTransferModule
 ├── momo: MomoModule
+├── providerKyc: ProviderKycModule
 ├── receipt: ReceiptModule
 └── ussdOtp: UssdOtpModule
-    └── All modules use → MonimeHttpClient
-                              ├── Timeout handling
-                              ├── Retry with backoff
-                              ├── AbortController support
-                              └── Client option validation
+    └── shared MonimeHttpClient
+        ├── client option validation
+        ├── request construction
+        ├── timeouts and abort signals
+        └── retries with backoff
 ```
 
----
+## HTTP client (`src/http-client.js`)
 
-## 1. HTTP Client (`src/http-client.js`)
-
-### Request Flow
+### Request flow
 
 ```
-request() → build_url() → build_headers() → execute_with_retry() → execute_request()
-                                                      ↓
-                                              Retry loop with backoff
-                                                      ↓
-                                              fetch() with combined signals
+request() → #build_url() → #build_headers() → #execute_with_retry() → #execute_request()
+                                                              ↓
+                                                     retry delay, if needed
+                                                              ↓
+                                                            fetch()
 ```
 
-### Timeout Implementation
+`request()` serializes a supplied body as JSON, omits undefined query parameters, and applies request-level configuration over the client defaults.
 
-Uses manual `AbortController` + `setTimeout` (not `AbortSignal.timeout()` for cleanup control):
+### Timeouts and signals
+
+For a positive timeout, the client creates an `AbortController`, schedules it with `setTimeout`, and clears that timer in a `finally` block. This avoids leaving a timer running after a request completes.
 
 ```javascript
 const timeout_controller = new AbortController();
-const timeout_id = setTimeout(() => timeout_controller.abort(), timeout);
+const timeout_id = setTimeout(() => {
+  timeout_controller.abort();
+}, timeout);
 
 try {
-  await fetch(url, { signal: timeout_controller.signal });
+  await fetch(url, { signal: AbortSignal.any([timeout_controller.signal]) });
 } finally {
-  clearTimeout(timeout_id); // Always cleanup
+  clearTimeout(timeout_id);
 }
 ```
 
-**Why not `AbortSignal.timeout()`?** We need to clear the timeout on success to prevent memory leaks in long-running processes.
+When the caller supplies `RequestConfig.signal`, the HTTP client combines it with the timeout signal through `AbortSignal.any()`. A timeout becomes `MonimeTimeoutError`; an abort from the caller is rethrown as `AbortError`.
 
-### Signal Combination
+### Retries
 
-Combines user signal + timeout signal using `AbortSignal.any()` (Node 20+):
+The client retries network failures and API responses with status 429, 500, 502, 503, or 504. Timeouts and caller-initiated aborts are not retried.
 
 ```javascript
-const signals = [timeout_controller.signal];
-if (external_signal) signals.push(external_signal);
-const combined = AbortSignal.any(signals);
+delay = retryDelay * retryBackoff ** retry_index + random(0..500ms)
 ```
 
-After abort, we check which signal fired to throw the right error:
-- `timeout_controller.signal.aborted` → `MonimeTimeoutError`
-- `external_signal.aborted` → Re-throw `AbortError`
+For an API error with a `Retry-After` header, the client uses that delay instead. It accepts both whole seconds and HTTP-date values.
 
-### Retry Logic
+### JSON responses
 
-**Retryable conditions:**
-- Network errors (`MonimeNetworkError`)
-- HTTP 429, 500, 502, 503, 504
+The client parses every response as JSON. If parsing fails, it throws `MonimeApiError` with the reason `invalid_json`, including for a non-JSON error page returned by a proxy or CDN.
 
-**Backoff formula:**
-```javascript
-delay = retryDelay * (retryBackoff ^ attempt) + random(0-500ms)
-```
+## Validation boundaries
 
-**Retry-After header:** Parsed from 429 responses, supports both seconds and HTTP-date formats.
+The SDK forwards request payloads, IDs, query parameters, and business-rule values unchanged. This lets consumers use newly supported API fields without waiting for an SDK release. The Monime API remains the authority for those values.
 
-### JSON Parsing Safety
+`MonimeHttpClient` validates configuration needed to run safely: credentials, an optional webhook secret, retry settings, timeout settings, and custom HTTPS base URLs.
 
 ```javascript
-let data;
-try {
-  data = await res.json();
-} catch {
-  throw new MonimeApiError("Invalid JSON response...", res.status, "invalid_json", []);
+if (base_url !== undefined) {
+  if (typeof base_url !== "string" || !base_url.startsWith("https://")) {
+    throw_option_error("baseUrl", "baseUrl must be an HTTPS URL", base_url);
+  }
 }
 ```
 
-Prevents crashes when server returns HTML error pages (proxies, CDNs).
-
----
-
-## 2. Validation responsibility
-
-API request payloads, IDs, query parameters, and business rules are not
-validated by the SDK. They are forwarded unchanged so new Monime fields and
-values can be used without waiting for an SDK release. Monime API errors are
-authoritative.
-
-The HTTP client only validates options needed for safe SDK execution, such as
-credentials, retry numbers, timeout values, and HTTPS for a custom base URL.
-
-### HTTPS Enforcement
-
-```javascript
-if (options.baseUrl !== undefined && !options.baseUrl.startsWith("https://")) {
-  throw new MonimeValidationError("baseUrl must use HTTPS for security", [
-    {
-      message: "baseUrl must use HTTPS for security",
-      field: "baseUrl",
-      value: options.baseUrl,
-    },
-  ]);
-}
-```
-
----
-
-## 3. Error Classes (`src/errors.js`)
-
-### Hierarchy
+## Errors (`src/errors.js`)
 
 ```
-MonimeError (base)
-├── MonimeApiError      - API returned 4xx/5xx
-├── MonimeTimeoutError  - Request timed out
-├── MonimeValidationError - Client execution options are invalid
-└── MonimeNetworkError  - Connection failed
+MonimeError
+├── MonimeApiError                  API returned an error response
+├── MonimeTimeoutError              request timed out
+├── MonimeValidationError           client options are invalid
+├── MonimeWebhookVerificationError  webhook could not be authenticated or decoded
+└── MonimeNetworkError              connection failed
 ```
 
-### Prototype Fix
-
-All error classes include prototype chain fix for proper `instanceof` checks:
+Each error restores its prototype chain so `instanceof` works across the supported runtime targets.
 
 ```javascript
 constructor(message) {
@@ -149,60 +107,34 @@ constructor(message) {
 }
 ```
 
-### Retryable Detection
+`MonimeApiError.isRetryable` is true for 429, 500, 502, 503, and 504. `MonimeNetworkError.isRetryable` is always true.
+
+## Module pattern
+
+Modules receive one shared `MonimeHttpClient` and forward their resource-specific arguments to it. Private fields use the `#` syntax.
 
 ```javascript
-// MonimeApiError
-get isRetryable() {
-  return [429, 500, 502, 503, 504].includes(this.code);
-}
+class XxxModule {
+  #http_client;
 
-// MonimeNetworkError
-get isRetryable() {
-  return true; // Network errors are always retryable
-}
-```
-
----
-
-## 4. Module Pattern (`src/*-module.js`)
-
-Each module follows the same pattern:
-
-```javascript
-export class XxxModule {
-  /** @type {MonimeHttpClient} */
-  http_client;
-
-  /** @param {MonimeHttpClient} http_client */
   constructor(http_client) {
-    this.http_client = http_client;
+    this.#http_client = http_client;
   }
 
-  /**
-   * @param {CreateXxxInput} input
-   * @param {RequestConfig} [config]
-   * @returns {Promise<XxxResponse>}
-   */
   async create(input, config) {
-    return this.http_client.request({
+    return this.#http_client.request({
       method: "POST",
       path: "/xxx",
       body: input,
       config,
     });
   }
-
-  async get(id, config) { /* forward ID in a GET request */ }
-  async list(params, config) { /* forward query params in a GET request */ }
-  async update(id, input, config) { /* forward ID and input in a PATCH request */ }
-  async delete(id, config) { /* forward ID in a DELETE request */ }
 }
 ```
 
-### Idempotency Keys
+### Idempotency keys
 
-Auto-generated for POST requests using `crypto.randomUUID()`:
+The HTTP client adds an `Idempotency-Key` to every POST request. A request can provide `RequestConfig.idempotencyKey`; otherwise, the client generates one with `crypto.randomUUID()`.
 
 ```javascript
 if (method === "POST") {
@@ -210,144 +142,57 @@ if (method === "POST") {
 }
 ```
 
-**Note:** Idempotency keys are auto-generated internally in `http-client.js` and passed via `RequestConfig.idempotencyKey` from modules.
+## Webhook verification (`src/webhook.js`)
 
----
+`WebhookModule.verify(rawBody, signatureHeader)` verifies an HS256 webhook when `webhookSecret` was supplied to `MonimeClient`. `verifyWebhookSignature(rawBody, signatureHeader, webhookSecret)` provides the same verification without a client instance.
 
-## 5. Type System (`src/types.ts`)
+Both functions preserve the supplied raw body, require a timestamp within 300 seconds of the local clock, compare the HMAC-SHA-256 digest with `timingSafeEqual`, then parse the authenticated body as JSON. Verification failures throw `MonimeWebhookVerificationError` with one of these reasons:
 
-### Response Wrappers
+- `signature_header_invalid`
+- `timestamp_outside_tolerance`
+- `signature_mismatch`
+- `payload_invalid`
 
-```javascript
-/**
- * @template T
- * @typedef {object} ApiResponse
- * @property {boolean} success
- * @property {string[]} messages
- * @property {T} result
- */
+## Type declarations
 
-/**
- * @template T
- * @typedef {object} ApiListResponse
- * @property {boolean} success
- * @property {string[]} messages
- * @property {T[]} result
- * @property {PaginationInfo} pagination
- */
+The public type barrel is `src/index.d.ts`. It defines the resource types, request inputs, response wrappers, client options, and exported error types. TypeScript generates declarations for JavaScript modules from their JSDoc when `npm run build` runs, then the build copies `src/index.d.ts` to `dist/index.d.ts`.
 
-/**
- * @typedef {object} ApiDeleteResponse
- * @property {boolean} success
- * @property {string[]} messages
- */
-```
+`ClientOptions` includes the required `spaceId` and `accessToken`, plus optional `webhookSecret`, `baseUrl`, `monimeVersion`, timeout, and retry settings. `RequestConfig` can override `timeout`, `retries`, `signal`, and `idempotencyKey` for one request.
 
-### Client Configuration
+## Build
 
-```javascript
-/**
- * @typedef {object} ClientOptions
- * @property {string} spaceId - Required, non-empty string
- * @property {string} accessToken - Required
- * @property {string} [baseUrl] - Default: "https://api.monime.io"
- * @property {string} [monimeVersion] - Default: "caph.2025-08-23"
- * @property {number} [timeout] - Default: 30000ms
- * @property {number} [retries] - Default: 2
- * @property {number} [retryDelay] - Default: 1000ms
- * @property {number} [retryBackoff] - Default: 2
- */
-
-/**
- * @typedef {object} RequestConfig
- * @property {number} [timeout]
- * @property {number} [retries]
- * @property {AbortSignal} [signal]
- * @property {string} [idempotencyKey]
- */
-```
-
----
-
-## 6. Build System
-
-### esbuild Configuration
+Run the full build with:
 
 ```bash
 npm run build
 ```
 
-- **ESM only** - No CommonJS build
-- **Node 20+** - Required for `AbortSignal.any()`
-- **Minified** - 20.1KB output
+The build creates an ESM bundle for Node 20 and declaration files in `dist/`. The bundle is minified with esbuild. `dist/index.d.ts` is the public declaration file; the other declaration files support its internal module imports.
 
-### TypeScript Declaration Generation
-
-Declaration generation is part of `npm run build` via `tsc --noEmit false --emitDeclarationOnly --rootDir src`.
-
-TypeScript generates declarations for the JavaScript modules from their JSDoc comments. The checked-in `src/index.d.ts` remains the public type barrel, while the generated module declarations are internal dependencies of `dist/client.d.ts`.
-
----
-
-## 7. Naming Conventions
+## Naming
 
 | Scope | Convention | Example |
-|-------|------------|---------|
+| --- | --- | --- |
 | Public API | camelCase | `paymentCode.create()`, `financialAccount.get()` |
-| Private members | snake_case | `http_client`, `build_url()`, `execute_request()` |
+| Private members and helpers | snake_case | `#http_client`, `#build_url()` |
 | Constants | UPPER_SNAKE | `API_VERSION`, `DEFAULT_TIMEOUT` |
 | Types | PascalCase | `ClientOptions`, `PaymentCode` |
-| Request methods | UPPER_CASE | `GET`, `POST`, `PATCH`, `DELETE` |
+| HTTP methods | UPPER_CASE | `GET`, `POST`, `PATCH`, `DELETE` |
 
----
-
-## 8. Modules Overview
-
-All modules follow the standard pattern and support CRUD operations where applicable.
+## Modules
 
 | Module | File | Purpose | Operations |
-|--------|------|---------|------------|
-| `bank` | `src/bank.js` | Retrieve bank provider information | `list(params)`, `get(providerId)` |
-| `financialAccount` | `src/financial-account.js` | Manage digital wallets/accounts | `create`, `get`, `list`, `update`, `getBalance` |
-| `financialTransaction` | `src/financial-transaction.js` | View immutable transaction ledger | `get`, `list` (read-only) |
-| `paymentCode` | `src/payment-code.js` | Create USSD payment links | `create`, `get`, `list`, `update`, `delete` |
-| `payment` | `src/payment.js` | View payments created by payment codes | `get`, `list`, `update` (read-mostly) |
-| `checkoutSession` | `src/checkout-session.js` | Hosted payment page sessions | `create`, `get`, `list` |
-| `payout` | `src/payout.js` | Disburse funds to external accounts | `create`, `get`, `list`, `update`, `delete` |
-| `webhook` | `src/webhook.js` | Event notification subscriptions | `create`, `get`, `list`, `update`, `delete` |
-| `internalTransfer` | `src/internal-transfer.js` | Transfer between financial accounts | `create`, `get`, `list`, `update` |
-| `momo` | `src/momo.js` | Retrieve mobile money provider info | `list(params)`, `get(providerId)` |
-| `receipt` | `src/receipt.js` | Manage digital receipts with entitlements | `get`, `redeem` |
-| `ussdOtp` | `src/ussd-otp.js` | USSD-based phone verification | `create`, `get`, `list` |
-
-### Module Constructor Pattern
-
-All modules receive the HTTP client singleton in their constructor:
-
-```javascript
-class XxxModule {
-  /** @type {MonimeHttpClient} */
-  http_client;
-
-  /** @param {MonimeHttpClient} http_client */
-  constructor(http_client) {
-    this.http_client = http_client;
-  }
-}
-```
-
-Modules are instantiated once in `MonimeClient` constructor and reused for the client's lifetime.
-
----
-
-**Build Output:**
-- `dist/index.js` - Minified bundle | 20.1KB
-- `dist/index.d.ts` - Public type declarations
-- `dist/*.d.ts` - Generated internal module declarations
-
-**Dev dependencies:**
-- `esbuild` - Fast bundler for production build
-- `typescript` - TypeScript compiler
-- `cp` in build script - Copies `src/index.d.ts` to `dist/index.d.ts`
-- `@biomejs/biome` - Code linting/formatting
-- `@types/node` - Node.js type definitions
+| --- | --- | --- | --- |
+| `bank` | `src/bank.js` | Bank provider information | `list`, `get` |
+| `financialAccount` | `src/financial-account.js` | Financial accounts | `create`, `get`, `list`, `update`, `getBalance` |
+| `financialTransaction` | `src/financial-transaction.js` | Transaction ledger | `get`, `list` |
+| `paymentCode` | `src/payment-code.js` | USSD payment links | `create`, `get`, `list`, `update`, `delete` |
+| `payment` | `src/payment.js` | Payments created by payment codes | `get`, `list`, `update` |
+| `checkoutSession` | `src/checkout-session.js` | Hosted payment sessions | `create`, `get`, `list`, `delete` |
+| `payout` | `src/payout.js` | Payouts to external accounts | `create`, `get`, `list`, `update`, `delete` |
+| `webhook` | `src/webhook.js` | Webhook subscriptions and signature verification | `create`, `get`, `list`, `update`, `delete`, `verify` |
+| `internalTransfer` | `src/internal-transfer.js` | Transfers between financial accounts | `create`, `get`, `list`, `update`, `delete` |
+| `momo` | `src/momo.js` | Mobile-money provider information | `list`, `get` |
+| `providerKyc` | `src/provider-kyc.js` | Provider KYC profiles | `get` |
+| `receipt` | `src/receipt.js` | Receipts and entitlements | `get`, `redeem` |
+| `ussdOtp` | `src/ussd-otp.js` | USSD phone verification | `create`, `get`, `list`, `delete` |
