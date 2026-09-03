@@ -4,7 +4,7 @@
 
 ![npm version](https://img.shields.io/npm/v/monimejs.svg)
 ![npm downloads](https://img.shields.io/npm/dm/monimejs.svg)
-![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)
+![TypeScript](https://img.shields.io/badge/TypeScript-7.0-blue.svg)
 ![Node.js](https://img.shields.io/badge/Node.js-%3E=20-green.svg)
 ![License](https://img.shields.io/badge/license-Apache_2.0-lightgrey.svg)
 
@@ -21,7 +21,6 @@
 - [Rate limits](#rate-limits)
 - [AbortController](#abortcontroller)
 - [Idempotency](#idempotency)
-- [Contributing](#contributing)
 - [License](#license)
 
 ---
@@ -259,12 +258,6 @@ await client.paymentCode.create(input, {
 Monime evaluates idempotency keys within a Space and rejects reuse with a
 different request. See the [Monime idempotency guide](https://docs.monime.io/developer-resources/api-basics/idempotency)
 for details.
-
----
-
-## Contributing
-
-For detailed contribution guidelines, see [CONTRIBUTING.md](./CONTRIBUTING.md)
 
 ---
 
