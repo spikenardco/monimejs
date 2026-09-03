@@ -6,9 +6,6 @@
   "engines": {
     "node": ">=20.0.0"
   },
-  "main": "./dist/index.js",
-  "module": "./dist/index.js",
-  "types": "./dist/index.d.ts",
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -18,19 +15,14 @@
   },
   "sideEffects": false,
   "files": [
-    "dist",
-    "src",
-    "README.md",
-    "LICENSE"
+    "dist"
   ],
   "scripts": {
     "format": "biome check --write .",
     "format:check": "biome check .",
     "test": "node --test",
     "typecheck": "tsc --noEmit",
-    "build": "npm run build:js && npm run build:types",
-    "build:js": "esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/index.js --target=node20 --minify --tree-shaking=true",
-    "build:types": "tsc --noEmit false --emitDeclarationOnly --rootDir src && cp src/index.d.ts dist/index.d.ts",
+    "build": "rm -rf dist && esbuild src/index.js --bundle --platform=node --format=esm --outfile=dist/index.js --target=node20 --minify && tsc --emitDeclarationOnly --rootDir src && cp src/index.d.ts dist/index.d.ts",
     "prepublishOnly": "npm run build"
   },
   "repository": {
@@ -38,21 +30,21 @@
     "url": "git+https://github.com/spikenardco/monimejs.git"
   },
   "keywords": [
-    "mobile money",
     "monime",
+    "monime sdk",
+    "payment gateway",
+    "payment orchestration",
+    "mobile money",
     "orange money",
-    "afri money",
-    "monimejs"
+    "afrimoney",
+    "sierra leone",
+    "payments",
+    "payouts",
+    "nodejs",
+    "typescript"
   ],
   "license": "Apache-2.0",
   "contributors": [
-    {
-      "name": "Ben",
-      "email": "bnjox@users.noreply.github.com",
-      "url": "https://github.com/bnjox"
-    }
-  ],
-  "maintainers": [
     {
       "name": "Ben",
       "email": "bnjox@users.noreply.github.com",
