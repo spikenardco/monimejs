@@ -66,6 +66,7 @@ Recommended to store credentials in `.env`:
 ```bash
 MONIME_SPACE_ID=spc-your-space-id
 MONIME_ACCESS_TOKEN=your-access-token
+MONIME_WEBHOOK_SECRET=your-webhook-signing-secret
 ```
 
 You can also pass credentials directly when creating the client.
@@ -82,6 +83,7 @@ import { MonimeClient } from "monimejs";
 const client = new MonimeClient({
   spaceId: process.env.MONIME_SPACE_ID,
   accessToken: process.env.MONIME_ACCESS_TOKEN,
+  webhookSecret: process.env.MONIME_WEBHOOK_SECRET,
 });
 ```
 
@@ -89,6 +91,19 @@ Now all methods use the client's credentials automatically.
 
 - **Authentication**: Both values are required. Prefer environment variables.
 - **Headers**: SDK automatically sets `Authorization`, `Monime-Space-Id`, and the pinned `Monime-Version` for each call. Set `monimeVersion` in the client options to override it.
+
+### Verify webhooks
+
+Pass the exact raw request body and the `Monime-Signature` header value. The SDK
+checks the signature and rejects timestamps more than five minutes from the
+server clock before returning the decoded event.
+
+```javascript
+const event = client.webhook.verify(
+  rawRequestBody,
+  request.headers["monime-signature"],
+);
+```
 
 ### Payment Codes
 
@@ -123,7 +138,7 @@ The SDK includes the following additional modules:
 - **`client.internalTransfer`** - Transfer between financial accounts (`create`, `get`, `list`, `update`)
 - **`client.checkoutSession`** - Create and manage hosted payment pages (`create`, `get`, `list`)
 - **`client.payout`** - Disburse funds to external accounts (`create`, `get`, `list`, `update`, `delete`)
-- **`client.webhook`** - Subscribe to payment and transaction events (`create`, `get`, `list`, `update`, `delete`)
+- **`client.webhook`** - Manage webhook subscriptions and verify deliveries (`create`, `get`, `list`, `update`, `delete`, `verify`)
 - **`client.receipt`** - Manage digital receipts and entitlements (`get`, `redeem`)
 - **`client.bank`** - List and query bank providers by country (`list`, `get`)
 - **`client.momo`** - List and query mobile money providers (`list`, `get`)
