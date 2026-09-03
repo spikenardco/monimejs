@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Replace the webhook verification stub with a tested HS256 verifier based on Monime's official WordPress implementation.
+**Goal:** Replace the webhook verification stub with a tested HS256 verifier.
 
 **Architecture:** `WebhookModule.verifySignature` will parse the complete signature header, authenticate the exact raw body with Node's built-in crypto module, and decode JSON only after authentication succeeds. A dedicated error class will expose stable reasons without including sensitive input.
 

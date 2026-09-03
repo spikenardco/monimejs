@@ -258,6 +258,7 @@ class WebhookModule {
       config,
     });
   }
+
   /**
    * Verifies the signature of an incoming webhook request.
    *
@@ -272,7 +273,6 @@ class WebhookModule {
    * @throws {TypeError} If caller-provided arguments are invalid
    * @throws {MonimeWebhookVerificationError} If verification or JSON decoding fails
    * @see {@link https://docs.monime.io/guide/webhook/hmac-verification}
-   * @see {@link https://github.com/monimesl/Wp-Monime/blob/61f8ef20bc8ecbdc07f5bc2c5268d2b941452669/src/Monime/core/webhook.php#L49-L157}
    */
   verify(rawBody, signatureHeader) {
     const secret = this.#webhook_secret;

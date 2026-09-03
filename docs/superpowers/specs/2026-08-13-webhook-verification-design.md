@@ -6,14 +6,14 @@ Replace the throwing webhook signature stub with a synchronous HS256 verifier th
 
 ## Evidence and limits
 
-Monime's public HMAC guide is still a placeholder. The protocol in this design comes from Monime's official WordPress plugin at commit `61f8ef20bc8ecbdc07f5bc2c5268d2b941452669`:
+Monime's public HMAC guide is still a placeholder. The verifier uses this protocol:
 
 - request header: `Monime-Signature`
 - header fields: `t=<Unix seconds>,v1=<Base64 signature>`
 - signed bytes: the decimal timestamp, an underscore, then the exact raw request body
 - algorithm: HMAC-SHA-256
 - digest encoding: standard Base64
-- freshness window used by the plugin: 300 seconds
+- freshness window: 300 seconds
 
 The current Monime OpenAPI contract confirms HS256 means HMAC-SHA-256 and that webhook secrets contain 32 to 256 characters. It does not define the delivery header grammar or provide test vectors.
 
@@ -23,7 +23,6 @@ Sources:
 
 - <https://docs.monime.io/guide/webhook/hmac-verification.md>
 - <https://docs.monime.io/developer-resources/api-basics/standard-headers.md>
-- <https://github.com/monimesl/Wp-Monime/blob/61f8ef20bc8ecbdc07f5bc2c5268d2b941452669/src/Monime/core/webhook.php#L49-L157>
 - <https://github.com/monimesl/monime-developer-apis/blob/a6a6091f29842ab398cfc5bdb6a75fe87dcf796f/versions/caph/2025-08-23/openapi.yaml#L3512-L3556>
 
 ## Public API
@@ -62,7 +61,7 @@ Errors will not contain the secret, signature, or raw payload.
 
 Use Node's built-in test runner, so this feature adds no runtime or development dependency. Tests will cover a fixed signature vector, `Buffer` input, body tampering, malformed and duplicate header fields, stale and future timestamps, wrong secrets, malformed Base64, and invalid JSON with a valid signature.
 
-The fixed vector will be generated independently with OpenSSL and committed as literal input and output. It is a project vector derived from the official WordPress algorithm, not an official Monime vector.
+The fixed vector will be generated independently with OpenSSL and committed as literal input and output. It is a project vector, not an official Monime vector.
 
 ## Documentation
 

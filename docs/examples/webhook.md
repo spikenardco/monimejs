@@ -56,7 +56,7 @@ export async function handleMonimeWebhook(request) {
 
 The default timestamp tolerance is 300 seconds. You can override it with `{ toleranceSeconds: number }`, but increasing the window also increases the time in which a captured request can be replayed.
 
-The verifier supports HS256 only. Its header and signed-payload handling follow [Monime's official WordPress plugin](https://github.com/monimesl/Wp-Monime/blob/61f8ef20bc8ecbdc07f5bc2c5268d2b941452669/src/Monime/core/webhook.php#L49-L157): `Monime-Signature: t=<Unix seconds>,v1=<Base64 HMAC-SHA-256>`, signed over `<timestamp>_<raw body>`. Monime's [public HMAC verification guide](https://docs.monime.io/guide/webhook/hmac-verification.md) is still a placeholder and does not provide an official test vector. The SDK does not verify ES256 because Monime has not published its delivery signature format.
+The verifier supports HS256 only. It expects `Monime-Signature: t=<Unix seconds>,v1=<Base64 HMAC-SHA-256>` and signs `<timestamp>_<raw body>`. Monime's [public HMAC verification guide](https://docs.monime.io/guide/webhook/hmac-verification.md) is still a placeholder and does not provide an official test vector. The SDK does not verify ES256 because Monime has not published its delivery signature format.
 
 ## create with HMAC verification
 
